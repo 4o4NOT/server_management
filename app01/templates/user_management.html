@@ -1,0 +1,246 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - 权限申请系统</title>
+    <!--<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>-->
+    <!-- <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.min.js"></script>-->
+    
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/all.min.css' %}" rel="stylesheet"></link>
+    <link href="{% static 'css/user_management.css' %}" rel="stylesheet"></link>
+    <script src="{% static 'js/qrcode.min.js' %}"></script>
+    <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/user_management.js' %}"></script>
+
+</head>
+<body>
+<div class="container py-5">
+    <!-- 页面头部 -->
+    <div class="header-gradient p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <!-- 返回首页按钮移到左侧并增强可见性 -->
+            <div class="mb-0">
+                <a href="{% url 'index' %}" class="btn btn-sm btn-outline-light ms-2">
+                    <i class="fas fa-sign-out-alt me-1"></i>返回首页
+                </a>
+            </div>
+            
+            <!-- 标题信息 -->
+            <div class="app-title text-center flex-grow-1 mx-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-users app-icon me-2"></i>
+                    <div>
+                        <h2 class="mb-0">用户管理</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用户操作区域 -->
+            <div class="user-actions d-flex align-items-center">
+                <div class="user-info me-3">
+                    <div class="user-avatar">{{ user.user_name|first|upper }}</div>
+                    <div class="d-none d-md-block ms-2">
+                        <div class="fw-bold">{{ user.user_name }}</div>
+                        <small class="text-white-50">管理员</small>
+                    </div>
+                </div>
+                <div>
+                    <!-- 新增独立的令牌管理按钮 -->
+                    <button class="token-management-btn" id="currentUserTokenBtn">
+                        <i class="fas fa-shield-alt me-1"></i>令牌管理
+                    </button>
+                    <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light ms-2">
+                        <i class="fas fa-sign-out-alt me-1"></i>登出
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户管理表格-->
+    <div class="card fade-in">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0"><i class="fas fa-user-cog me-2"></i>用户列表</h3>
+                <div class="d-flex">
+                    <button class="btn btn-sm btn-primary me-2" id="refreshBtn">
+                        <i class="fas fa-sync-alt me-1"></i>刷新列表
+                    </button>
+                    <!-- 移除了添加用户按钮 -->
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- 添加批量操作按钮 -->
+            <div class="mb-3">
+                <button class="btn btn-sm btn-danger" id="bulkDeleteBtn" disabled>
+                    <i class="fas fa-trash-alt me-1"></i>批量删除
+                </button>
+            </div>
+            <table class="table table-hover align-middle">
+                <!-- 表头 -->
+                <thead>
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="selectAllCheckbox">
+                        </th>
+                        <!-- 移除了ID列 -->
+                        <th>用户名</th>
+                        <th>手机号</th>
+                        <th>注册时间</th>
+                        <th>最后登录</th>
+                        <th>状态</th>
+                        <th>管理员</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr data-user-id="{{ u.id }}">
+                        <td>
+                            <input type="checkbox" class="user-checkbox" data-user-id="{{ u.id }}">
+                        </td>
+                        <!-- 移除了ID列显示 -->
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-2">{{ u.user_name|first|upper }}</div>
+                                <span>{{ u.user_name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.date_joined|date:"Y-m-d" }}</td>
+                        <td>
+                            {% if u.last_login %}
+                                {{ u.last_login|date:"Y-m-d H:i" }}
+                            {% else %}
+                                <span class="text-muted">从未登录</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.is_active %}
+                                <span class="status-active">激活</span>
+                            {% else %}
+                                <span class="status-inactive">禁用</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.is_superuser %}
+                                <i class="fas fa-check-circle text-success"></i>
+                            {% else %}
+                                <i class="fas fa-times-circle text-muted"></i>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <!-- 普通用户可以重置密码 -->
+                                {% if not u.is_superuser %}
+                                <button class="btn btn-sm btn-warning reset-pwd-btn" data-bs-toggle="modal" data-bs-target="#resetPasswordModal"
+                                    data-user-id="{{ u.id }}" data-user-name="{{ u.user_name }}">
+                                    <i class="fas fa-key me-1"></i>重置密码
+                                </button>
+                                {% endif %}
+                            
+                                <!-- 普通用户可以禁用/启用 -->
+                                {% if not u.is_superuser %}
+                                {% if u.is_active %}
+                                <button class="btn btn-sm btn-danger toggle-status-btn" data-user-id="{{ u.id }}" data-user-status="0">
+                                    <i class="fas fa-ban me-1"></i>禁用
+                                </button>
+                                {% else %}
+                                <button class="btn btn-sm btn-success toggle-status-btn" data-user-id="{{ u.id }}" data-user-status="1">
+                                    <i class="fas fa-check me-1"></i>启用
+                                </button>
+                                {% endif %}
+                                {% endif %}
+                            
+                                <!-- 普通用户可以删除 -->
+                                {% if not u.is_superuser %}
+                                <button class="btn btn-sm btn-danger delete-user-btn" data-user-id="{{ u.id }}" data-user-name="{{ u.user_name }}">
+                                    <i class="fas fa-trash-alt me-1"></i>删除
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 令牌管理模态框（修改为当前用户） -->
+<div class="modal fade" id="manageTokenModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>令牌管理</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3 text-center" id="tokenInfo">
+                    <p>正在加载令牌信息...</p>
+                </div>
+                <div class="qr-code-container" id="qrCodeContainer">
+                    <!-- 二维码将在这里渲染 -->
+                </div>
+                <div class="mb-3 text-center" id="tokenQrCode" style="display: none;">
+                    <div id="qrCodeCanvas" class="mb-3"></div>
+                    <p class="text-muted">请使用认证器扫描二维码</p>
+                    <p class="fw-bold mt-2" id="tokenSecret"></p>
+                </div>
+                <div class="mb-3" id="tokenVerify" style="display: none;">
+                    <label class="form-label">输入验证码</label>
+                    <input type="text" class="form-control" id="tokenCode" placeholder="输入6位数字验证码">
+                    <div class="form-text">扫描二维码后，请输入认证器显示的6位验证码以完成绑定</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-danger" id="resetTokenBtn" style="display: none;">
+                    <i class="fas fa-redo me-1"></i>重置令牌
+                </button>
+                <button type="button" class="btn btn-primary" id="verifyTokenBtn" style="display: none;">
+                    <i class="fas fa-check me-1"></i>验证并激活
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 重置密码模态框 -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">重置密码</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="resetPasswordForm">   
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">确认新密码</label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-primary" form="resetPasswordForm">重置密码</button>
+            </div>
+        </div>
+    </div>
+</div>
+ <!-- 页脚信息 -->
+        <div class="login-footer text-center mt-6">
+            <p>© 2025 权限申请系统 | 版本 1.0.0 | 作者： 王政君 wzj@servyou.com.cn</p>
+        </div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可申请服务器列表 - 权限申请系统</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/fontawesome.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <link href="{% static 'css/all.min.css' %}" rel="stylesheet">
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</head>
+<body>
+    <div class="container py-5">
+        <!-- 页面头部 -->
+        <div class="header-gradient p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-0"><i class="fas fa-server me-2"></i>可申请服务器列表</h1>
+                    <p class="mb-0 app-tagline">以下是您可以申请权限的所有服务器</p>
+                </div>
+                <a href="{% url 'index' %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-1"></i>返回首页
+                </a>
+            </div>
+        </div>
+
+        <!-- 说明信息 -->
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>说明：</strong>您可以申请以下服务器的临时访问权限。申请时请选择对应的服务器地址和账户名。
+        </div>
+
+        <!-- 服务器列表 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>服务器列表</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>服务器地址</th>
+                                <th>端口</th>
+                                <th>账户名</th>
+                                <th>描述</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="serversTableBody">
+                            <!-- 服务器列表将通过JavaScript动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载完成后获取服务器列表
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchAvailableServers();
+        });
+
+        // 获取可申请的服务器列表
+        function fetchAvailableServers() {
+            fetch('/api/available_servers/')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        displayServers(result.data);
+                    } else {
+                        console.error('获取服务器列表失败:', result.message);
+                        document.getElementById('serversTableBody').innerHTML = 
+                            '<tr><td colspan="5" class="text-center text-danger">加载服务器列表失败</td></tr>';
+                    }
+                })
+                .catch(error => {
+                    console.error('获取服务器列表时发生错误:', error);
+                    document.getElementById('serversTableBody').innerHTML = 
+                        '<tr><td colspan="5" class="text-center text-danger">加载服务器列表时发生错误</td></tr>';
+                });
+        }
+
+        // 显示服务器列表
+        function displayServers(servers) {
+            const tableBody = document.getElementById('serversTableBody');
+            
+            if (!servers || servers.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">暂无服务器信息</td></tr>';
+                return;
+            }
+
+            // 清空表格
+            tableBody.innerHTML = '';
+
+            // 添加服务器数据
+            servers.forEach(server => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${server.host}</td>
+                    <td>${server.port}</td>
+                    <td>${server.username}</td>
+                    <td>${server.description || '无描述'}</td>
+                    <td>
+                        <a href="${window.location.origin}/index/#applySection" 
+                           class="btn btn-sm btn-primary apply-btn"
+                           data-host="${server.host}"
+                           data-username="${server.username}">
+                            <i class="fas fa-key me-1"></i>申请权限
+                        </a>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // 为申请按钮添加事件监听器
+            document.querySelectorAll('.apply-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const host = this.getAttribute('data-host');
+                    const username = this.getAttribute('data-username');
+                    
+                    // 保存到localStorage，以便在首页使用
+                    localStorage.setItem('selectedServerHost', host);
+                    localStorage.setItem('selectedServerUsername', username);
+                    
+                    // 跳转到首页
+                    window.location.href = '/index/#applySection';
+                });
+            });
+        }
+    </script>
+</body>
+</html>

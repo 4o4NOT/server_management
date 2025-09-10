@@ -1,0 +1,175 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务器管理</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/all.min.css' %}" rel="stylesheet"></link>
+    <link href="{% static 'css/server_management.css' %}" rel="stylesheet"></link>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/server_management.js' %}"></script>
+
+</head>
+<!-- 页面主体 -->
+<body>
+<!-- 主容器：居中显示内容，上下留白，占据剩余垂直空间 -->
+<div class="container py-5">
+    <!-- 页面头部区域：紫色渐变背景，包含标题和导航按钮 -->
+    <div class="header-gradient">
+        <!-- 使用Flex布局排列三个主要元素：返回首页按钮、标题、登出按钮 -->
+        <div class="d-flex justify-content-between align-items-center">
+            <!-- 左侧：返回首页按钮 -->
+            <div class="mb-0">
+                <a href="{% url 'index' %}" class="btn btn-sm btn-outline-light ms-2">
+                    <i class="fas fa-sign-out-alt me-1"></i>返回首页
+                </a>
+            </div>
+            
+            <!-- 中间：页面标题 -->
+            <div class="app-title text-center flex-grow-1 mx-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <!-- 标题图标 -->
+                    <i class="fas fa-server app-icon me-2"></i>
+                    <div>
+                        <!-- 主标题 -->
+                        <h2 class="mb-0">服务器管理</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：登出按钮 -->
+            <div class="mb-0">
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light ms-2">
+                    <i class="fas fa-sign-out-alt me-1"></i>登出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域：包含表单和服务器列表 -->
+    <!-- justify-content-center：确保子元素在行内居中对齐 -->
+    <div class="row justify-content-center">
+        <!-- 左侧表单区域：调整为更窄的列宽以与标题栏对齐 -->
+        <div class="col-lg-3">
+            <!-- 添加服务器表单卡片 -->
+            <div class="card fade-in" id="serverFormCard" style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.95);">
+                <div class="card-header text-center">
+                    <h3 class="mb-0">
+                        <!-- 添加模式标题 -->
+                        <span id="formTitle"><i class="fas fa-plus-circle"></i>添加服务器</span>
+                        <!-- 编辑模式标题（默认隐藏） -->
+                        <span id="editTitle" class="edit-mode-title" style="display: none;">
+                            <i class="fas fa-edit"></i>编辑服务器
+                        </span>
+                    </h3>
+                    <!-- 正在编辑的服务器信息（默认隐藏） -->
+                    <div id="editingServerInfo" class="mt-2 small text-muted" style="display: none;"></div>
+                </div>
+                <div class="card-body">
+                    <!-- 编辑状态指示器（默认隐藏） -->
+                    <div id="editingIndicator" class="align-items-center" style="display: none;">
+                    </div>
+                    <!-- 服务器表单 -->
+                    <form id="serverForm" method="post" action="/api/add_server/">
+                        {% csrf_token %}
+                        <!-- 主机地址输入 -->
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-desktop me-1"></i>主机地址</label>
+                            <input type="text" class="form-control" id="host" name="host" required placeholder="例如: 192.168.1.100">
+                            <div class="error-message" id="hostError"></div>
+                        </div>
+                        <!-- 端口输入 -->
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-plug me-1"></i>端口</label>
+                            <input type="number" class="form-control" id="port" name="port" value="22" min="1" max="65535">
+                            <div class="error-message" id="portError"></div>
+                        </div>
+                        <!-- 用户名输入 -->
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-user me-1"></i>用户名</label>
+                            <input type="text" class="form-control" id="username" name="username" required placeholder="例如: root">
+                            <div class="error-message" id="usernameError"></div>
+                        </div>
+                        <!-- 密码输入 -->
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-key me-1"></i>密码</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <div class="error-message" id="passwordError"></div>
+                        </div>
+                        <!-- 描述输入 -->
+                        <div class="mb-4">
+                            <label class="form-label"><i class="fas fa-comment me-1"></i>描述</label>
+                            <input type="text" class="form-control" id="description" name="description" placeholder="例如: 数据库服务器">
+                            <div class="error-message" id="descriptionError"></div>
+                        </div>
+                        <!-- 表单按钮区域 -->
+                        <div class="button-container">
+                            <!-- 提交按钮：添加服务器或更新服务器 -->
+                            <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                                <span id="submitText"><i class="fas fa-plus"></i>添加服务器</span>
+                                <span id="updateText" style="display: none;"><i class="fas fa-save"></i>更新</span>
+                            </button>
+                            <!-- 取消编辑按钮（仅在编辑模式下显示） -->
+                            <button type="button" class="btn btn-outline-secondary w-100" id="cancelEdit" style="display: none;">
+                                <i class="fas fa-times"></i>取消编辑
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧服务器列表区域：相应调整列宽以保持总宽度一致 -->
+        <div class="col-lg-9">
+            <!-- 服务器列表卡片 -->
+            <div class="card fade-in" style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.95);">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-list"></i>服务器列表</h3>
+                </div>
+                <div class="card-body">
+                    <!-- 服务器表格容器 -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <!-- 表格头部 -->
+                            <thead>
+                            <tr>
+                                <th>主机地址</th>
+                                <th>端口</th>
+                                <th>用户名</th>
+                                <th>密码</th>
+                                <th>描述</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+
+                            <!-- 表格主体 -->
+                            <tbody id="serversTableBody">
+                                <!-- 加载状态行 -->
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">加载中...</span>
+                                        </div>
+                                        正在加载服务器列表...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- 无服务器信息提示（默认隐藏） -->
+                    <div id="noServersMessage" class="text-center text-muted mt-3 d-none">
+                        <i class="fas fa-info-circle me-1"></i>暂无服务器信息
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        <!-- 页脚信息 -->
+        <div class="login-footer text-center mt-6">
+            <p>© 2025 权限申请系统 | 版本 1.0.0 | 作者： 王政君 wzj@servyou.com.cn</p>
+        </div>
+    </div>
+</body>
+</html>

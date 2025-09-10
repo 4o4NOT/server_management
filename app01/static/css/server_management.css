@@ -1,0 +1,527 @@
+/* 
+ * 服务器管理页面样式表
+ * 包含页面整体布局、卡片样式、表单样式、表格样式等
+ */
+
+/* 设置body为flex布局，使其能够占据整个视口高度 */
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 定义CSS变量，方便统一管理和修改主题色 */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 主题渐变色：紫色 */
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); /* 次要渐变色：粉色 */
+    --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); /* 成功状态渐变色：绿色 */
+    --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* 卡片阴影效果 */
+    --transition: all 0.3s ease; /* 通用过渡动画效果 */
+}
+
+/* 页面整体背景设置 */
+body {
+    background: #f8f9fa; /* 浅灰色背景 */
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; /* 字体族 */
+    min-height: 100vh; /* 最小高度为视口高度 */
+    display: flex;
+    flex-direction: column;
+    background-image: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%); /* 背景渐变 */
+}
+
+/* 
+ * 页面标题栏样式
+ * 位于页面顶部，包含页面标题和导航按钮
+ */
+.header-gradient {
+    background: var(--primary-gradient); /* 使用紫色渐变背景 */
+    color: white; /* 白色文字 */
+    border-radius: 15px; /* 圆角边框 */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* 阴影效果 */
+    margin: 0 auto 1.5rem; /* 居中显示，下方留白 */
+    padding: 1rem; /* 内边距 */
+    max-width: 95%; /* 最大宽度，确保与下方卡片对齐 */
+}
+
+
+/* 标题容器样式 */
+.app-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* 图标与文字间距 */
+}
+
+/* 标题图标样式 */
+.app-icon {
+    font-size: 2.5rem; /* 图标大小 */
+}
+
+/* 页面主标题样式 */
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+/* 页面主标题图标样式 */
+.page-title i {
+    margin-right: 0.75rem;
+    font-size: 2rem;
+}
+
+/* 页面副标题样式 */
+.page-subtitle {
+    opacity: 0.9;
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+/* 
+ * 卡片样式
+ * 用于表单区域和服务器列表区域
+ */
+.card {
+    border: none; /* 无边框 */
+    border-radius: 15px; /* 圆角 */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* 阴影 */
+    transition: var(--transition); /* 过渡动画 */
+    margin-bottom: 2rem; /* 下方留白 */
+    overflow: hidden; /* 隐藏溢出内容 */
+    background-color: white; /* 白色背景 */
+    max-width: 100%; /* 最大宽度 */
+}
+
+/* 卡片悬停效果 */
+.card:hover {
+    transform: translateY(-5px); /* 向上移动5px */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* 更深的阴影 */
+}
+
+/* 卡片头部样式 */
+.card-header {
+    background: transparent; /* 透明背景 */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* 底部分割线 */
+    font-weight: 600; /* 字体加粗 */
+    padding: 1.25rem 1.5rem; /* 内边距 */
+    font-size: 1.25rem; /* 字体大小 */
+    text-align: center; /* 文字居中 */
+}
+
+/* 
+ * 表单样式
+ * 用于添加/编辑服务器的表单元素
+ */
+.form-control,
+.form-select {
+    border-radius: 10px; /* 圆角 */
+    padding: 12px 15px; /* 内边距 */
+    border: 1px solid #e1e5eb; /* 边框 */
+    transition: var(--transition); /* 过渡动画 */
+    background: white; /* 白色背景 */
+    width: 100%; /* 宽度100% */
+    max-width: 400px; /* 最大宽度 */
+    margin-left: auto; /* 水平居中 */
+    margin-right: auto; /* 水平居中 */
+}
+
+/* 表单元素聚焦状态 */
+.form-control:focus,
+.form-select:focus {
+    border-color: #667eea; /* 聚焦时边框颜色 */
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15); /* 聚焦阴影 */
+}
+
+/* 表单标签样式 */
+.form-label {
+    font-weight: 500; /* 字体加粗 */
+    margin-bottom: 0.5rem; /* 下方留白 */
+    font-size: 1rem; /* 字体大小 */
+}
+
+/* 表单标签中的图标样式 */
+.form-label i {
+    font-size: 1.2rem; /* 图标大小 */
+    margin-right: 0.5rem; /* 右侧留白 */
+}
+
+/* 
+ * 按钮样式
+ * 包括提交按钮、操作按钮等
+ */
+.btn {
+    border-radius: 10px; /* 圆角 */
+    padding: 10px 20px; /* 内边距 */
+    font-weight: 500; /* 字体加粗 */
+    transition: var(--transition); /* 过渡动画 */
+    border: none; /* 无边框 */
+    display: inline-flex; /* 弹性布局 */
+    align-items: center; /* 垂直居中 */
+    justify-content: center; /* 水平居中 */
+    font-size: 0.95rem; /* 字体大小 */
+}
+
+/* 按钮中的图标样式 */
+.btn i {
+    margin-right: 8px; /* 右侧留白 */
+}
+
+/* 主要按钮样式（紫色渐变） */
+.btn-primary {
+    background: linear-gradient(to right, #6c63ff, #8f7fff); /* 渐变背景 */
+    color: white; /* 白色文字 */
+}
+
+/* 成功按钮样式（绿色渐变） */
+.btn-success {
+    background: linear-gradient(to right, #28a745, #34d058); /* 渐变背景 */
+    color: white; /* 白色文字 */
+}
+
+/* 按钮悬停效果 */
+.btn:hover {
+    transform: translateY(-2px); /* 向上移动2px */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* 阴影效果 */
+}
+
+/* 调整返回首页按钮样式 - 与用户管理页面保持一致 */
+.btn-light {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #667eea;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.btn-light:hover {
+    background-color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    border-color: #667eea;
+}
+
+.btn-light i {
+    color: #667eea;
+}
+
+/* 
+ * 表格样式
+ * 用于显示服务器列表
+ */
+.table-responsive {
+    border-radius: 10px; /* 圆角 */
+    overflow: hidden; /* 隐藏溢出 */
+}
+
+.table {
+    border-collapse: separate; /* 分离边框 */
+    border-spacing: 0; /* 无间距 */
+    margin-bottom: 0; /* 无下边距 */
+    width: 100%; /* 宽度100% */
+    background-color: rgba(255, 255, 255, 0.85); /* 半透明白色背景 */
+    backdrop-filter: blur(5px); /* 背景模糊效果 */
+    border-radius: 10px; /* 圆角 */
+    overflow: hidden; /* 隐藏溢出 */
+}
+
+/* 表格头部样式 */
+.table th {
+    background-color: rgba(108, 99, 255, 0.05); /* 浅紫色背景 */
+    font-weight: 600; /* 字体加粗 */
+    padding: 0.8rem 1rem; /* 内边距 */
+    text-align: center; /* 文字居中 */
+    color: #495057; /* 文字颜色 */
+    white-space: nowrap; /* 不换行 */
+}
+
+/* 表格单元格样式 */
+.table td {
+    padding: 0.8rem 1rem; /* 内边距 */
+    vertical-align: middle; /* 垂直居中 */
+    text-align: center; /* 文字居中 */
+}
+
+/* 表格行悬停效果 */
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.03); /* 浅灰色背景 */
+}
+
+/* 
+ * 密码显示相关样式
+ * 用于密码的显示/隐藏功能
+ */
+.password-cell {
+    position: relative; /* 相对定位 */
+    text-align: center; /* 文字居中 */
+}
+
+.password-text {
+    font-family: monospace; /* 等宽字体 */
+    letter-spacing: 2px; /* 字符间距 */
+}
+
+.toggle-password {
+    background: none; /* 无背景 */
+    border: none; /* 无边框 */
+    color: #667eea; /* 主题色 */
+    cursor: pointer; /* 手型光标 */
+    position: absolute; /* 绝对定位 */
+    right: 10px; /* 右侧距离 */
+    top: 50%; /* 垂直居中 */
+    transform: translateY(-50%); /* 垂直居中 */
+    opacity: 0.7; /* 透明度 */
+    transition: opacity 0.2s; /* 透明度过渡 */
+    padding: 0.3rem; /* 内边距 */
+}
+
+.toggle-password:hover {
+    opacity: 1; /* 悬停时不透明 */
+    color: #764ba2; /* 悬停时颜色 */
+}
+
+/* 
+ * 操作按钮样式
+ * 用于表格中的编辑、删除等操作按钮
+ */
+.action-buttons .btn {
+    padding: 0.4rem 0.7rem; /* 内边距 */
+    font-size: 0.9rem; /* 字体大小 */
+    margin: 0 0.3rem; /* 左右留白 */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* 阴影 */
+    min-width: 38px; /* 最小宽度 */
+}
+
+.action-buttons .btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); /* 警告按钮渐变 */
+    color: white; /* 白色文字 */
+}
+
+.action-buttons .btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); /* 危险按钮渐变 */
+    color: white; /* 白色文字 */
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-2px); /* 悬停时向上移动 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* 悬停时阴影 */
+}
+
+/* 
+ * 导航链接样式
+ * 包括返回首页和登出按钮
+ */
+.back-link {
+    text-decoration: none; /* 无下划线 */
+    color: white; /* 白色文字 */
+    font-weight: 500; /* 字体加粗 */
+    transition: var(--transition); /* 过渡动画 */
+    padding: 8px 15px; /* 内边距 */
+    border-radius: 10px; /* 圆角 */
+    display: inline-flex; /* 弹性布局 */
+    align-items: center; /* 垂直居中 */
+    background: rgba(108, 99, 255, 0.8); /* 半透明背景 */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* 阴影 */
+}
+
+.back-link i {
+    margin-right: 0.5rem; /* 右侧留白 */
+}
+
+.back-link:hover {
+    background: rgba(255, 255, 255, 0.2); /* 悬停时背景 */
+    color: white; /* 悬停时文字颜色 */
+}
+
+/* 
+ * 加载动画样式
+ * 用于异步操作时的加载状态
+ */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, .3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 错误消息样式 */
+.error-message {
+    color: #dc3545; /* 红色 */
+    font-size: 0.875rem; /* 字体大小 */
+    margin-top: 0.25rem; /* 上方留白 */
+    padding-left: 0.25rem; /* 左侧留白 */
+}
+
+/* 编辑状态指示器 */
+.editing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 12px 15px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.editing-indicator i {
+    color: #667eea;
+    font-size: 1.25rem;
+}
+
+.editing-indicator span {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* 编辑模式下的卡片样式 */
+.edit-mode .card {
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.25);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+/* 淡入动画效果 */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 按钮容器 */
+.button-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+
+/* 
+ * 响应式调整
+ * 针对不同屏幕尺寸的适配
+ */
+
+/* 中等屏幕及以下 */
+@media (max-width: 768px) {
+    .header-gradient {
+        padding: 0.75rem; /* 减小内边距 */
+    }
+    
+    .app-title h2 {
+        font-size: 1.5rem; /* 减小标题字体 */
+    }
+    
+    .app-icon {
+        font-size: 2rem; /* 减小图标大小 */
+    }
+    
+    .page-title i {
+        font-size: 1.5rem; /* 减小标题图标大小 */
+    }
+    
+    .btn-light {
+        padding: 5px 10px; /* 减小按钮内边距 */
+        font-size: 0.875rem; /* 减小按钮字体 */
+    }
+    
+    .card-header {
+        padding: 1rem; /* 减小卡片头部内边距 */
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.7rem; /* 减小表格单元格内边距 */
+    }
+}
+
+/* 小屏幕及以下 */
+@media (max-width: 576px) {
+    .header-gradient .d-flex {
+        flex-wrap: wrap; /* 允许换行 */
+    }
+    
+    .app-title {
+        order: 2; /* 调整顺序 */
+        width: 100%; /* 宽度100% */
+        margin: 0.5rem 0; /* 上下留白 */
+    }
+    
+    .app-title .d-flex {
+        justify-content: center; /* 居中对齐 */
+    }
+    
+    .btn-light {
+        padding: 5px 10px; /* 减小按钮内边距 */
+        font-size: 0.875rem; /* 减小按钮字体 */
+    }
+    
+    .app-icon {
+        font-size: 1.75rem; /* 进一步减小图标大小 */
+    }
+    
+    .page-title i {
+        font-size: 1.25rem; /* 进一步减小标题图标大小 */
+    }
+    
+    .app-title h2 {
+        font-size: 1.25rem; /* 进一步减小标题字体 */
+    }
+}
+
+/* 编辑模式高亮动画 */
+@keyframes highlight {
+    0% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+    }
+}
+
+.highlight-edit {
+    animation: highlight 1s ease-out;
+}
+
+/* 编辑模式下的卡片样式 */
+.edit-mode .card {
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.25);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    transform: translateY(-5px);
+    transition: all 0.3s ease;
+}
+
+/* 编辑模式下的标题样式 */
+.edit-mode-title {
+    color: #667eea; /* 主题色 */
+}
+
+/* 编辑状态信息样式 */
+#editingServerInfo {
+    font-weight: 500;
+    color: #667eea;
+}

@@ -1,0 +1,172 @@
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+body {
+    background: #f8f9fa;
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-image: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+}
+.header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-width: 800px;
+    margin: 0 auto 2rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    max-width: 500px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(极光, 0, 0, 0.05);
+    font-weight: 600;
+    padding: 1.25rem 1.5rem;
+    text-align: center;
+}
+.form-control {
+    border-radius: 10px;
+    padding: 12px 50px 12px 15px; /* 为眼睛图标留出空间 */
+    border: 1px solid #e1e5eb;
+    transition: var(--transition);
+}
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15);
+}
+.btn {
+    border-radius: 10极光;
+    padding: 12px 20px;
+    font-weight: 500;
+    transition: var(--transition);
+    border: none;
+}
+.btn-primary {
+    background: var(--primary-gradient);
+    font-size: 1.05rem;
+}
+.btn-register {
+    background: var(--success-gradient);
+    color: white;
+}
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+.alert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    display: none;
+    animation: fadeIn 0.3s ease-in;
+}
+.alert-danger {
+    background: var(--secondary-gradient);
+    color: white;
+}
+.alert-success {
+    background: var(--success-gradient);
+    color: white;
+}
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.login-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+}
+.btn-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 1rem;
+}
+.signup-prompt {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+.input-error {
+    border-color: #f5576c !important;
+    box-shadow: 0 0 0 0.25rem rgba(245, 87, 108, 0.15) !important;
+}
+.error-message {
+    color: #f5576c;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: none;
+}
+.login-icon {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #667eea;
+}
+.password-container {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    width: 38px;
+}
+.app-logo {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+.app-tagline {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 0;
+}

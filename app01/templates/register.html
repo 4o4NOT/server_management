@@ -1,0 +1,105 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册 - 权限申请系统</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/register.css' %}" rel="stylesheet"></link>
+    <link href="{% static 'css/all.min.css' %}" rel="stylesheet"></link>
+    <script src="{% static 'js/register.js' %}"></script>
+</head>
+<body>
+<div class="container py-5">
+    <!-- 系统标题 -->
+    <div class="header-gradient p-4">
+        <h1 class="mb-3 text-center"><i class="fas fa-user-plus app-logo"></i></h1>
+        <h1 class="mb-3 text-center">权限申请系统</h1>
+        <p class="mb-0 text-center app-tagline">安全、便捷的权限管理系统</p>
+    </div>
+
+    <!-- 注册表单 -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <div class="login-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h3 class="mb-0">用户注册</h3>
+        </div>
+        <div class="card-body">
+            <!-- 错误提示区域 - 默认隐藏 -->
+            <div id="errorAlert" class="alert alert-danger mb-4" style="display: none;">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span id="errorMessage"></span>
+            </div>
+
+            <form id="registerForm" method="post" action="{% url 'register' %}">
+                {% csrf_token %}
+
+                <!-- 用户名 -->
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-user me-1"></i>用户名（中文姓名）</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="请输入2-4个汉字的中文姓名" required>
+                    <div id="usernameError" class="error-message">请输入2-4个汉字的中文姓名</div>
+                </div>
+
+                <!-- 手机号 -->
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-mobile-alt me-1"></i>手机号</label>
+                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="请输入11位手机号" pattern="\d{11}" required>
+                    <div id="phoneError" class="error-message">手机号格式不正确</div>
+                </div>
+
+                <!-- 密码 -->
+                <div class="mb-3 password-container">
+                    <label class="form-label"><i class="fas fa-lock me-1"></i>密码</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="请输入密码（8-20个字符）" required>
+                    <span class="password-toggle" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </span>
+                    <div id="passwordError" class="error-message">密码不符合要求</div>
+                </div>
+
+                <!-- 确认密码 -->
+                <div class="mb-3 password-container">
+                    <label class="form-label"><i class="fas fa-lock me-1"></i>确认密码</label>
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="请再次输入密码" required>
+                    <span class="password-toggle" id="toggleConfirmPassword">
+                        <i class="fas fa-eye"></i>
+                    </span>
+                    <div id="confirmPasswordError" class="error-message">两次输入的密码不一致</div>
+                </div>
+
+                <!-- 密码要求提示 -->
+                <div class="mb-4 bg-light p-3 rounded">
+                    <p class="mb-1"><small>密码要求：</small></p>
+                    <ul class="mb-0">
+                        <li><small>长度至少为8个字符</small></li>
+                        <li><small>包含至少一个大写字母</small></li>
+                        <li><small>包含至少一个小写字母</small></li>
+                        <li><small>包含至少一个数字</small></li>
+                        <li><small>包含至少一个特殊字符</small></li>
+                    </ul>
+                </div>
+
+                <!-- 提交按钮 -->
+                <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                    <i class="fas fa-user-plus me-2"></i>注册
+                </button>
+
+                <!-- 登录链接 -->
+                <div class="mt-3 text-center">
+                    已有账号？<a href="{% url 'login' %}" class="text-decoration-none">前往登录</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 页脚信息 -->
+    <div class="login-footer">
+        <p>© 2025 权限申请系统 | 版本 1.0.0 | 作者： 王政君 wzj@servyou.com.cn</p>
+    </div>
+</div>
+</body>
+</html>

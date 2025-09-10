@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 权限申请系统</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/login.css' %}" rel="stylesheet"></link>
+    <link href="{% static 'css/all.min.css' %}" rel="stylesheet"></link>
+    <script src="{% static 'js/login.js' %}"></script>
+</head>
+<body>
+<div class="container py-5">
+    <!-- 系统标题 -->
+    <div class="header-gradient p-4">
+        <h1 class="mb-3 text-center"><i class="fas fa-user-shield app-logo"></i></h1>
+        <h1 class="mb-3 text-center">权限申请系统</h1>
+        <p class="mb-0 text-center app-t极光">安全、便捷的权限管理系统</p>
+    </div>
+
+    <!-- 登录表单 -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <div class="login-icon">
+                <i class="fas fa-sign-in-alt"></i>
+            </div>
+            <h3 class="mb-0">用户登录</h3>
+        </div>
+        <div class="card-body">
+            <!-- 错误提示区域 - 默认隐藏 -->
+            <div id="errorAlert" class="alert alert-danger mb-4" style="display: none;">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span id="errorMessage">用户名或密码不正确，请重试</span>
+            </div>
+
+            {% if register_success %}
+            <div class="alert alert-success mb-4">
+                <i class="fas fa-check-circle me-2"></i>
+                <span>注册成功！请登录</span>
+            </div>
+            {% endif %}
+
+            <form id="loginForm" method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-user me-1"></i>用户名或手机号</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="请输入用户名或手机号" required>
+                </div>
+
+                <div class="mb-3 password-container">
+                    <label class="form-label"><i class="fas fa-lock me-1"></i>密码</label>
+                    <div class="position-relative">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="请输入密码" required>
+                        <span class="password-toggle" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe" name="remember_me">
+                    <label class="form-check-label" for="rememberMe">记住我</label>
+                    <a href="#" class="float-end text-decoration-none">忘记密码?</a>
+                </div>
+
+                <!-- 登录按钮 -->
+                <button type="submit" class="btn btn-primary w-100" id="loginBtn">
+                    <i class="fas fa-sign-in-alt me-2"></i>登录
+                </button>
+
+                <!-- 添加注册按钮 -->
+                <div class="signup-prompt mt-3">
+                    还没有账号？立即注册以获取权限
+                </div>
+
+                <!-- 双按钮容器 -->
+                <div class="btn-container mt-2">
+                    <a href="#" class="btn btn-outline-secondary">
+                        <i class="fas fa-info-circle me-2"></i>了解更多
+                    </a>
+                    <a href="{% url 'register' %}" class="btn btn-register">
+                        <i class="fas fa-user-plus me-2"></i>注册账号
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 页脚信息 -->
+    <div class="login-footer">
+        <p>© 2025 权限申请系统 | 版本 1.0.0 | 作者： 王政君 wzj@servyou.com.cn</p>
+    </div>
+</div>
+</body>
+</html>

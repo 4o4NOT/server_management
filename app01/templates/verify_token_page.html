@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>令牌验证</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.7/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-5">
+    <h3 class="mb-4">请输入管理员令牌验证码</h3>
+    <div class="mb-3">
+        <input type="text" class="form-control" id="totpCode" placeholder="6位数字验证码" maxlength="6">
+    </div>
+    <button type="button" class="btn btn-primary" id="verifyBtn">验证</button>
+    <div id="resultArea" class="mt-4"></div>
+    <div id="countdownArea" class="mt-2"></div>
+</div>
+<script>
+    // 获取URL参数
+    function getQueryParams() {
+        const params = {};
+        window.location.search.replace(/^\?/, '').split('&').forEach(function(item) {
+            const kv = item.split('=');
+            if (kv.length === 2) params[kv[0]] = decodeURIComponent(kv[1]);
+        });
+        return params;
+    }
+    const applyParams = getQueryParams();
+
+    document.getElementById('verifyBtn').onclick = async function() {
+        const code = document.getElementById('totpCode').value.trim();
+        if (!code || code.length !== 6 || isNaN(code)) {
+            alert('请输入有效的6位数字验证码');
+            return;
+        }
+        // 先验证令牌
+        const verifyRes = await fetch('{% url "verify_otp" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ token_code: code })
+        });
+        const verifyData = await verifyRes.json();
+        if (verifyData.status !== 'success') {
+            alert(verifyData.message || '令牌验证失败');
+            return;
+        }
+        // 令牌通过后提交权限申请
+        const applyRes = await fetch('{% url "apply_permission" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(applyParams)
+        });
+        const applyData = await applyRes.json();
+        if (applyData.status === 'success') {
+            const info = applyData.server_info;
+            document.getElementById('resultArea').innerHTML =
+                `<div class="alert alert-success">
+                    <b>服务器:</b> ${info.host}<br>
+                    <b>用户名:</b> ${info.username}<br>
+                    <b>密码:</b> <code>${info.password}</code><br>
+                    <b>有效期至:</b> ${info.expiration}
+                </div>`;
+            // 倒计时
+            startCountdown(info.expiration);
+        } else {
+            document.getElementById('resultArea').innerHTML =
+                `<div class="alert alert-danger">${applyData.message}</div>`;
+        }
+    };
+
+    function startCountdown(expiration) {
+        const endTime = new Date(expiration.replace(/-/g, '/')).getTime();
+        function update() {
+            const now = Date.now();
+            let diff = Math.floor((endTime - now) / 1000);
+            if (diff < 0) diff = 0;
+            const h = Math.floor(diff / 3600);
+            const m = Math.floor((diff % 3600) / 60);
+            const s = diff % 60;
+            document.getElementById('countdownArea').innerHTML =
+                `<span class="countdown">密码有效期倒计时：${h}小时${m}分${s}秒</span>`;
+            if (diff > 0) setTimeout(update, 1000);
+        }
+        update();
+    }
+</script>
+</body>
+</html>
