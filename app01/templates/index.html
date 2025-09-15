@@ -22,6 +22,12 @@
             apply_permission: "{% url 'apply_permission' %}",
             check_server_password_expiration: "{% url 'check_server_password_expiration' %}"
         };
+        
+        // 定义密码显示配置
+        window.PASSWORD_CONFIG = {
+            display_mode: "{{ password_display_mode|default:'auto_copy' }}",
+            modal_display_duration: {{ modal_display_duration|default:3 }}
+        };
         </script>
         <div class="container py-5 flex-grow-1">
         <!-- 页面头部 -->
@@ -214,6 +220,47 @@
             </div>
         </div>
 
+        <!-- 密码显示模态框 -->
+        <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="passwordModalLabel">服务器密码信息</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">服务器信息</label>
+                            <div class="form-control-plaintext" id="modalServerInfo"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <div class="form-control-plaintext" id="modalUsername"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">密码</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="modalPassword" readonly>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn">
+                                    <i class="fas fa-eye me-1"></i>显示密码
+                                </button>
+                                <button class="btn btn-outline-primary" type="button" id="copyPasswordBtn">
+                                    <i class="fas fa-copy me-1"></i>复制
+                                </button>
+                            </div>
+                        </div>
+                        <div class="alert alert-info" id="passwordVisibilityWarning">
+                            <i class="fas fa-info-circle me-1"></i>
+                            密码将在 <span id="countdownTimer" class="fw-bold">3</span> 秒后自动隐藏
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 在申请表单后面添加倒计时显示区域 -->
         <div id="countdownSection" class="countdown-card fade-in mx-auto mt-4 col-lg-8" style="display: none;">
             <div class="card-header" style="background: linear-gradient(135deg, #e74c3c, #c0392b) !important; border: none !important;">
@@ -277,10 +324,56 @@
             </div>
         </div>
 
-        <!-- 页脚信息 -->
-        <div class="login-footer text-center mt-6">
-            <p>© 2025 权限申请系统 | 版本 1.0.0 | 作者： 王政君 wzj@servyou.com.cn</p>
+        <!-- 密码信息显示区域 -->
+        <div id="passwordInfoSection" class="countdown-card fade-in mx-auto mt-4 col-lg-8" style="display: none;">
+            <div class="card-header" style="background: linear-gradient(135deg, #3498db, #2980b9) !important; border: none !important;">
+                <h3 class="mb-0 text-white"><i class="fas fa-key me-2"></i>服务器密码信息</h3>
+            </div>
+            <div class="card-body">
+                <div class="server-info-box">
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="server-info-label"><i class="fas fa-server me-2"></i>服务器信息</div>
+                            <div id="passwordServerInfo" class="server-info-value"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="server-info-label"><i class="fas fa-user me-2"></i>账户信息</div>
+                            <div id="passwordAccountInfo" class="server-info-value"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="server-info-box mt-3">
+                    <div class="row">
+                        <div class="col-md-8 mb-3 mb-md-0">
+                            <div class="server-info-label"><i class="fas fa-lock me-2"></i>密码</div>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="passwordValue" value="••••••••" readonly>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn">
+                                    <i class="fas fa-eye me-1"></i>显示
+                                </button>
+                                <button class="btn btn-outline-primary" type="button" id="copyPasswordFromSectionBtn">
+                                    <i class="fas fa-copy me-1"></i>复制
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="server-info-label"><i class="fas fa-clock me-2"></i>自动隐藏倒计时</div>
+                            <div class="server-info-value">
+                                <span id="passwordCountdownTimer" class="fw-bold">3</span> 秒
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info" id="passwordVisibilityWarning">
+                    <i class="fas fa-info-circle me-1"></i>
+                    密码将在 <span id="passwordTimer" class="fw-bold">3</span> 秒后自动隐藏
+                </div>
+            </div>
         </div>
+
+        {% include 'footer.html' %}
     </div>
 </body>
 </html>

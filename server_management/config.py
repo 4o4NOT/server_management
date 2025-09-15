@@ -135,13 +135,14 @@ class Config:
     # 任务配置
     RUN_BACKGROUND_TASKS = app_config.getboolean('tasks', 'RUN_BACKGROUND_TASKS', fallback=DEFAULT_CONFIG['tasks']['RUN_BACKGROUND_TASKS'] == 'True')
     PASSWORD_CHECK_INTERVAL = app_config.getint('tasks', 'PASSWORD_CHECK_INTERVAL', fallback=int(DEFAULT_CONFIG['tasks']['PASSWORD_CHECK_INTERVAL']))
-    
+
     # OTP配置
     OTP_VALID_WINDOW = app_config.getint('otp', 'VALID_WINDOW', fallback=int(DEFAULT_CONFIG['otp']['VALID_WINDOW']))
     
     # 权限申请配置
     PERMISSION_DURATION_OPTIONS = app_config.get('permission', 'DURATION_OPTIONS', fallback=DEFAULT_CONFIG['permission']['DURATION_OPTIONS'])
-    
+    PASSWORD_DISPLAY_MODE = app_config.get('permission', 'password_display_mode', fallback='auto_copy')
+
     @classmethod
     def get_duration_options(cls):
         """
@@ -160,7 +161,7 @@ class Config:
         except Exception as e:
             logger.error(f"解析时长选项配置失败: {e}")
             # 返回默认选项
-            options = [(0.5, '0.5小时'), (1, '1小时'), (2, '2小时'), (4, '4小时'), (8, '8小时'), (12, '12小时')]
+            options = [(0.5, '0.5小时'), (1, '1小时'), (2, '2小时')]
         return options
     
     @classmethod

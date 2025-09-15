@@ -16,6 +16,10 @@
 <body>
     {% block content %}{% endblock %}
     
+    {% block footer %}
+    {% include 'footer.html' %}
+    {% endblock %}
+    
     <!-- 本地Bootstrap JS -->
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     <!-- 自定义JS -->

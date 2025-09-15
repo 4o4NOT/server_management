@@ -12,413 +12,439 @@
     <link href="{% static 'css/all.min.css' %}" rel="stylesheet">
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 
-                <style>
-            .header-gradient {
-                background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-                color: white;
-                border-radius: 10px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                margin-bottom: 2rem;
+    <style>
+        .header-gradient {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .app-title h2 {
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .app-icon {
+            font-size: 1.8rem;
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 10px 10px 0 0 !important;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a0db9 0%, #1c68ef 100%);
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .table th {
+            font-weight: 600;
+            background-color: #f8f9fa;
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #dee2e6;
+        }
+
+        .host-suggestions {
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+            background: white;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            position: absolute; /* 恢复使用absolute定位 */
+        }
+
+        .host-suggestions div {
+            cursor: pointer;
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .host-suggestions div:hover {
+            background-color: #f8f9fa;
+        }
+
+        .host-suggestions div:last-child {
+            border-bottom: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
 
-            .app-title h2 {
-                font-weight: 600;
-                margin: 0;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
+        }
 
-            .app-icon {
-                font-size: 1.8rem;
+        .loading::after {
+            content: "";
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-left: 5px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
             }
+        }
 
-            .user-actions {
-                display: flex;
-                align-items: center;
-                gap: 15px;
-            }
-
-            .user-info {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-
-            .user-avatar {
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.2);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: bold;
-                font-size: 1.1rem;
-                color: white;
-            }
-
-            .card {
-                border: none;
-                border-radius: 10px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                margin-bottom: 2rem;
-            }
-
-            .card-header {
-                background: #f8f9fa;
-                border-bottom: 1px solid #e9ecef;
-                border-radius: 10px 10px 0 0 !important;
-                font-weight: 600;
-            }
-
-            .btn-primary {
-                background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-                border: none;
-            }
-
-            .btn-primary:hover {
-                background: linear-gradient(135deg, #5a0db9 0%, #1c68ef 100%);
-                transform: translateY(-2px);
-                transition: all 0.2s ease;
-            }
-
-            .form-label {
-                font-weight: 500;
-                color: #495057;
-            }
-
-            .table th {
-                font-weight: 600;
-                background-color: #f8f9fa;
-            }
-
-            .table-bordered th,
-            .table-bordered td {
-                border: 1px solid #dee2e6;
-            }
-
-            .host-suggestions {
-                max-height: 200px;
-                overflow-y: auto;
-                z-index: 9999;
-                background: white;
-                border-radius: 0.375rem;
-                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-                position: absolute; /* 恢复使用absolute定位 */
-            }
-
-            .host-suggestions div {
-                cursor: pointer;
-                padding: 8px 12px;
-                border-bottom: 1px solid #eee;
-            }
-
-            .host-suggestions div:hover {
-                background-color: #f8f9fa;
-            }
-
-            .host-suggestions div:last-child {
-                border-bottom: none;
-            }
-
-            .hidden {
-                display: none;
-            }
-
-            .fade-in {
-                animation: fadeIn 0.5s ease-in;
-            }
-
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .loading::after {
-                content: "";
-                display: inline-block;
-                width: 12px;
-                height: 12px;
-                border: 2px solid #ffffff;
-                border-radius: 50%;
-                border-top-color: transparent;
-                animation: spin 1s linear infinite;
-                margin-left: 5px;
-            }
-
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-
-            .login-footer {
-                margin-top: auto;
-                padding: 20px 0;
-                color: #6c757d;
-                font-size: 0.9rem;
-            }
-        </style>
+        .login-footer {
+            margin-top: auto;
+            padding: 20px 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="container py-5 flex-grow-1">
-        <!-- 页面头部 -->
-        <div class="header-gradient p-4 mb-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <!-- 返回首页按钮移到左侧并增强可见性 -->
-                <div class="mb-0">
-                    <a href="{% url 'index' %}" class="btn btn-sm btn-outline-light ms-2">
-                        <i class="fas fa-sign-out-alt me-1"></i>返回首页
+<div class="container py-5 flex-grow-1">
+    <!-- 页面头部 -->
+    <div class="header-gradient p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <!-- 返回首页按钮移到左侧并增强可见性 -->
+            <div class="mb-0">
+                <a href="{% url 'index' %}" class="btn btn-sm btn-outline-light ms-2">
+                    <i class="fas fa-sign-out-alt me-1"></i>返回首页
+                </a>
+            </div>
+
+            <!-- 标题信息 -->
+            <div class="app-title text-center flex-grow-1 mx-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-user-shield app-icon me-2"></i>
+                    <div>
+                        <h2 class="mb-0">批量权限申请</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用户操作区域 -->
+            <div class="user-actions d-flex align-items-center">
+                <div class="user-info me-3">
+                    <div class="user-avatar">{{ user.user_name|first|upper }}</div>
+                    <div class="d-none d-md-block ms-2">
+                        <div class="fw-bold">{{ user.user_name }}</div>
+                        <small class="text-white-50">普通用户</small>
+                    </div>
+                </div>
+                <div>
+                    <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light ms-2">
+                        <i class="fas fa-sign-out-alt me-1"></i>登出
                     </a>
                 </div>
-
-                <!-- 标题信息 -->
-                <div class="app-title text-center flex-grow-1 mx-3">
-                    <div class="d-flex align-items-center justify-content-center">
-                        <i class="fas fa-user-shield app-icon me-2"></i>
-                        <div>
-                            <h2 class="mb-0">批量权限申请</h2>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 用户操作区域 -->
-                <div class="user-actions d-flex align-items-center">
-                    <div class="user-info me-3">
-                        <div class="user-avatar">{{ user.user_name|first|upper }}</div>
-                        <div class="d-none d-md-block ms-2">
-                            <div class="fw-bold">{{ user.user_name }}</div>
-                            <small class="text-white-50">普通用户</small>
-                        </div>
-                    </div>
-                    <div>
-                        <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light ms-2">
-                            <i class="fas fa-sign-out-alt me-1"></i>登出
-                        </a>
-                    </div>
-                </div>
             </div>
         </div>
+    </div>
 
-        <!-- 批量申请表单 -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h3 class="mb-0"><i class="fas fa-file-alt me-2"></i>批量权限申请</h3>
-            </div>
-            <div class="card-body">
-                <form id="bulkApplyForm">
-                    <!-- 申请人员 -->
-                    <div class="mb-3 row align-items-center">
-                        <label class="col-sm-2 col-form-label text-sm-end"><i class="fas fa-user me-1"></i>申请人员</label>
-                        <div class="col-sm-10">
-                            <input type="text" class="form-control" id="applicant" value="{{ user.user_name }}"
-                                disabled>
-                        </div>
+    <!-- 批量申请表单 -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <h3 class="mb-0"><i class="fas fa-file-alt me-2"></i>批量权限申请</h3>
+        </div>
+        <div class="card-body">
+            <form id="bulkApplyForm">
+                <!-- 申请人员 -->
+                <div class="mb-3 row align-items-center">
+                    <label class="col-sm-2 col-form-label text-sm-end"><i class="fas fa-user me-1"></i>申请人员</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="applicant" value="{{ user.user_name }}"
+                               disabled>
                     </div>
+                </div>
 
-                    <!-- 申请时长 -->
-                    <div class="mb-3 row align-items-center">
-                        <label class="col-sm-2 col-form-label text-sm-end"><i class="fas fa-clock me-1"></i>申请时长</label>
-                        <div class="col-sm-10">
-                            <select class="form-select" id="duration" required>
-                                {% for hours, display_name in duration_options %}
+                <!-- 申请时长 -->
+                <div class="mb-3 row align-items-center">
+                    <label class="col-sm-2 col-form-label text-sm-end"><i class="fas fa-clock me-1"></i>申请时长</label>
+                    <div class="col-sm-10">
+                        <select class="form-select" id="duration" required>
+                            {% for hours, display_name in duration_options %}
                                 <option value="{{ hours }}"{% if hours == 0.5 %} selected{% endif %}>{{ display_name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                            {% endfor %}
+                        </select>
                     </div>
+                </div>
 
-                    <!-- 申请原因 -->
-                    <div class="mb-4 row">
-                        <label class="col-sm-2 col-form-label text-sm-end"><i
-                                class="fas fa-comment me-1"></i>申请原因</label>
-                        <div class="col-sm-10">
+                <!-- 申请原因 -->
+                <div class="mb-4 row">
+                    <label class="col-sm-2 col-form-label text-sm-end"><i
+                            class="fas fa-comment me-1"></i>申请原因</label>
+                    <div class="col-sm-10">
                             <textarea class="form-control" id="reason" rows="3" placeholder="请说明批量申请权限的原因"
-                                required></textarea>
-                        </div>
+                                      required></textarea>
+                    </div>
+                </div>
+
+                <!-- 批量申请表格 -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="fas fa-list me-1"></i>申请列表</h5>
+                        <button type="button" class="btn btn-success btn-sm" id="addRowBtn">
+                            <i class="fas fa-plus me-1"></i>添加行
+                        </button>
                     </div>
 
-                    <!-- 批量申请表格 -->
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="mb-0"><i class="fas fa-list me-1"></i>申请列表</h5>
-                            <button type="button" class="btn btn-success btn-sm" id="addRowBtn">
-                                <i class="fas fa-plus me-1"></i>添加行
-                            </button>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table table-bordered" id="bulkApplyTable">
-                                <thead>
-                                    <tr>
-                                        <th width="45%">目标主机</th>
-                                        <th width="45%">申请账号</th>
-                                        <th width="10%">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="applyTableBody">
-                                    <tr class="apply-row">
-                                        <td>
-                                            <div class="position-relative" style="height: auto;">
-                                                <input type="text" class="form-control host-input" placeholder="输入主机地址"
-                                                    autocomplete="off" required>
-                                                <div class="host-suggestions bg-white border rounded shadow-sm hidden"></div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <select class="form-select account-select" required>
-                                                <option value="">请选择账号</option>
-                                            </select>
-                                        </td>
-                                        <td class="text-center">
-                                            <button type="button" class="btn btn-danger btn-sm remove-row-btn">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="bulkApplyTable">
+                            <thead>
+                            <tr>
+                                <th width="45%">目标主机</th>
+                                <th width="45%">申请账号</th>
+                                <th width="10%">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody id="applyTableBody">
+                            <tr class="apply-row">
+                                <td>
+                                    <div class="position-relative" style="height: auto;">
+                                        <input type="text" class="form-control host-input" placeholder="输入主机地址"
+                                               autocomplete="off" required>
+                                        <div class="host-suggestions bg-white border rounded shadow-sm hidden"></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <select class="form-select account-select" required>
+                                        <option value="">请选择账号</option>
+                                    </select>
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-danger btn-sm remove-row-btn">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </div>
+                </div>
 
-                    <div class="row">
-                        <div class="col-12 text-center">
-                            <button type="submit" class="btn btn-primary" id="submitBtn">
-                                <span id="submitText"><i class="fas fa-paper-plane me-1"></i>提交批量申请</span>
-                            </button>
-                        </div>
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <span id="submitText"><i class="fas fa-paper-plane me-1"></i>提交批量申请</span>
+                        </button>
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
+    </div>
 
-        <!-- 批量申请结果模态框 -->
-        <div class="modal fade" id="bulkResultModal" tabindex="-1" aria-labelledby="bulkResultModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="bulkResultModalLabel"><i class="fas fa-info-circle me-2"></i>批量申请结果
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="resultContent"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                    </div>
+    <!-- 批量申请结果模态框 -->
+    <div class="modal fade" id="bulkResultModal" tabindex="-1" aria-labelledby="bulkResultModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkResultModalLabel"><i class="fas fa-info-circle me-2"></i>批量申请结果
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="resultContent"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- 页脚信息 -->
-    <div class="login-footer text-center mt-6">
-        <p>© 2025 权限申请系统 | 版本 1.0.0 | 作者： 王政君 bi6nyx@163.com</p>
-    </div>
+{% include 'footer.html' %}
+</body>
+<script>
+    // 全局变量
+    const serversData = {{ servers| safe }};
+    let passwordGenerated = false;
+    // 添加一个数组来跟踪已选择的主机
+    let selectedHosts = [];
 
-    <script>
-        // 全局变量
-        const serversData = {{ servers| safe }};
-        let passwordGenerated = false;
+    document.addEventListener('DOMContentLoaded', function () {
+        // 初始化第一行
+        initializeRow(document.querySelector('.apply-row'));
 
-        document.addEventListener('DOMContentLoaded', function () {
-            // 初始化第一行
-            initializeRow(document.querySelector('.apply-row'));
+        // 初始化已选择主机数组
+        updateSelectedHosts();
 
-            // 添加行按钮事件
-            document.getElementById('addRowBtn').addEventListener('click', addNewRow);
+        // 添加行按钮事件
+        document.getElementById('addRowBtn').addEventListener('click', addNewRow);
 
-            // 表单提交事件
-            document.getElementById('bulkApplyForm').addEventListener('submit', handleBulkApply);
+        // 表单提交事件
+        document.getElementById('bulkApplyForm').addEventListener('submit', handleBulkApply);
 
-            // 移除行按钮事件委托
-            document.getElementById('applyTableBody').addEventListener('click', function (e) {
-                if (e.target.closest('.remove-row-btn')) {
-                    removeRow(e.target.closest('.apply-row'));
+        // 移除行按钮事件委托
+        document.getElementById('applyTableBody').addEventListener('click', function (e) {
+            if (e.target.closest('.remove-row-btn')) {
+                const row = e.target.closest('.apply-row');
+                // 移除行前先更新已选择主机列表
+                const hostInput = row.querySelector('.host-input');
+                if (hostInput && hostInput.value) {
+                    const index = selectedHosts.indexOf(hostInput.value);
+                    if (index > -1) {
+                        selectedHosts.splice(index, 1);
+                    }
                 }
-            });
+                removeRow(row);
+                // 更新剩余行的下拉选项
+                updateAllAccountSelects();
+            }
         });
+    });
 
-        // 初始化行
-        function initializeRow(row) {
+    // 更新已选择主机列表
+    function updateSelectedHosts() {
+        selectedHosts = [];
+        document.querySelectorAll('.apply-row').forEach(row => {
             const hostInput = row.querySelector('.host-input');
-            const suggestionsDiv = row.querySelector('.host-suggestions');
-            const accountSelect = row.querySelector('.account-select');
-            let positionInterval = null;
+            if (hostInput && hostInput.value) {
+                selectedHosts.push(hostInput.value);
+            }
+        });
+    }
 
-            // 更新下拉框位置的函数
-            function updateSuggestionsPosition() {
-                if (!suggestionsDiv.classList.contains('hidden') && document.contains(hostInput)) {
-                    const rect = hostInput.getBoundingClientRect();
-                    const containerRect = hostInput.closest('.position-relative').getBoundingClientRect();
-                    
-                    suggestionsDiv.style.left = '0px';
-                    suggestionsDiv.style.top = rect.height + 'px';
-                    suggestionsDiv.style.width = containerRect.width + 'px';
+    // 更新所有行的账号选择下拉框
+    function updateAllAccountSelects() {
+        document.querySelectorAll('.apply-row').forEach(row => {
+            const hostInput = row.querySelector('.host-input');
+            const accountSelect = row.querySelector('.account-select');
+            if (hostInput && hostInput.value && accountSelect) {
+                updateAccountOptions(accountSelect, hostInput.value);
+            }
+        });
+    }
+
+    // 初始化行
+    function initializeRow(row) {
+        const hostInput = row.querySelector('.host-input');
+        const suggestionsDiv = row.querySelector('.host-suggestions');
+        const accountSelect = row.querySelector('.account-select');
+        let positionInterval = null;
+
+        // 更新下拉框位置的函数
+        function updateSuggestionsPosition() {
+            if (!suggestionsDiv.classList.contains('hidden') && document.contains(hostInput)) {
+                const rect = hostInput.getBoundingClientRect();
+                const containerRect = hostInput.closest('.position-relative').getBoundingClientRect();
+
+                suggestionsDiv.style.left = '0px';
+                suggestionsDiv.style.top = rect.height + 'px';
+                suggestionsDiv.style.width = containerRect.width + 'px';
+            }
+        }
+
+        // 主机输入事件
+        hostInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+
+            // 更新已选择主机列表（移除当前行的主机）
+            updateSelectedHosts();
+            const currentIndex = selectedHosts.indexOf(this.value);
+            if (currentIndex > -1) {
+                selectedHosts.splice(currentIndex, 1);
+            }
+
+            if (query.length < 1) {
+                suggestionsDiv.classList.add('hidden');
+                if (positionInterval) {
+                    clearInterval(positionInterval);
+                    positionInterval = null;
+                }
+                return;
+            }
+
+            // 过滤掉已选择的主机
+            let matchedServers = serversData.filter(server =>
+                (server.host.toLowerCase().includes(query) ||
+                    (server.description && server.description.toLowerCase().includes(query))) &&
+                !selectedHosts.includes(server.host)
+            ).slice(0, 5);
+
+            // 如果当前输入的主机名完全匹配但已被选择，也要显示出来
+            if (this.value && selectedHosts.includes(this.value)) {
+                const exactMatch = serversData.filter(server => server.host === this.value);
+                if (exactMatch.length > 0) {
+                    matchedServers = exactMatch.slice(0, 5);
                 }
             }
 
-            // 主机输入事件
-            hostInput.addEventListener('input', function () {
-                const query = this.value.toLowerCase().trim();
-
-                if (query.length < 1) {
-                    suggestionsDiv.classList.add('hidden');
-                    if (positionInterval) {
-                        clearInterval(positionInterval);
-                        positionInterval = null;
-                    }
-                    return;
-                }
-
-                const matchedServers = serversData.filter(server =>
-                    server.host.toLowerCase().includes(query) ||
-                    (server.description && server.description.toLowerCase().includes(query))
-                ).slice(0, 5);
-
-                if (matchedServers.length > 0) {
-                    const fragment = document.createDocumentFragment();
-                    matchedServers.forEach(server => {
-                        const div = document.createElement('div');
-                        div.className = 'p-2 hover-bg-light cursor-pointer';
-                        div.textContent = `${server.host}:${server.port} (${server.username})${server.description ? ' - ' + server.description : ''}`;
-                        div.dataset.host = server.host;
-                        div.addEventListener('mousedown', function (e) {
-                            e.preventDefault(); // 防止失去焦点
-                            hostInput.value = server.host;
-                            updateAccountOptions(accountSelect, server.host);
-                            suggestionsDiv.classList.add('hidden');
-                            if (positionInterval) {
-                                clearInterval(positionInterval);
-                                positionInterval = null;
-                            }
-                        });
-                        fragment.appendChild(div);
-                    });
-                    suggestionsDiv.innerHTML = '';
-                    suggestionsDiv.appendChild(fragment);
-                    suggestionsDiv.classList.remove('hidden');
-                    
-                    // 更新位置
-                    updateSuggestionsPosition();
-                    
-                    // 启动位置更新定时器
-                    if (positionInterval) {
-                        clearInterval(positionInterval);
-                    }
-                    positionInterval = setInterval(updateSuggestionsPosition, 100);
-                    
-                    // 如果只有一个匹配项，自动选择
-                    if (matchedServers.length === 1) {
-                        const server = matchedServers[0];
+            if (matchedServers.length > 0) {
+                const fragment = document.createDocumentFragment();
+                matchedServers.forEach(server => {
+                    const div = document.createElement('div');
+                    div.className = 'p-2 hover-bg-light cursor-pointer';
+                    div.textContent = `${server.host}:${server.port} (${server.username})${server.description ? ' - ' + server.description : ''}`;
+                    div.dataset.host = server.host;
+                    div.addEventListener('mousedown', function (e) {
+                        e.preventDefault(); // 防止失去焦点
                         hostInput.value = server.host;
                         updateAccountOptions(accountSelect, server.host);
                         suggestionsDiv.classList.add('hidden');
@@ -426,59 +452,469 @@
                             clearInterval(positionInterval);
                             positionInterval = null;
                         }
-                    }
-                } else {
-                    suggestionsDiv.innerHTML = '<div class="p-2 text-muted">没有找到匹配的服务器</div>';
-                    suggestionsDiv.classList.remove('hidden');
-                    
-                    // 更新位置
-                    updateSuggestionsPosition();
-                    
-                    // 启动位置更新定时器
-                    if (positionInterval) {
-                        clearInterval(positionInterval);
-                    }
-                    positionInterval = setInterval(updateSuggestionsPosition, 100);
-                }
-            });
+                        // 更新已选择主机列表
+                        updateSelectedHosts();
+                        // 更新其他行的下拉选项
+                        updateAllAccountSelects();
+                    });
+                    fragment.appendChild(div);
+                });
+                suggestionsDiv.innerHTML = '';
+                suggestionsDiv.appendChild(fragment);
+                suggestionsDiv.classList.remove('hidden');
 
-            // 失去焦点时隐藏建议
-            hostInput.addEventListener('blur', function () {
-                // 添加一个小延迟，确保点击建议项时不会立即隐藏
-                setTimeout(() => {
+                // 更新位置
+                updateSuggestionsPosition();
+
+                // 启动位置更新定时器
+                if (positionInterval) {
+                    clearInterval(positionInterval);
+                }
+                positionInterval = setInterval(updateSuggestionsPosition, 100);
+
+                // 如果只有一个匹配项，自动选择
+                if (matchedServers.length === 1) {
+                    const server = matchedServers[0];
+                    hostInput.value = server.host;
+                    updateAccountOptions(accountSelect, server.host);
                     suggestionsDiv.classList.add('hidden');
                     if (positionInterval) {
                         clearInterval(positionInterval);
                         positionInterval = null;
                     }
-                }, 200);
-            });
-            
-            // 当输入框获得焦点且有内容时，重新显示建议
-            hostInput.addEventListener('focus', function () {
-                if (this.value.trim() && suggestionsDiv.children.length > 0) {
-                    suggestionsDiv.classList.remove('hidden');
-                    updateSuggestionsPosition();
-                    
-                    // 启动位置更新定时器
-                    if (positionInterval) {
-                        clearInterval(positionInterval);
-                    }
-                    positionInterval = setInterval(updateSuggestionsPosition, 100);
+                    // 更新已选择主机列表
+                    updateSelectedHosts();
+                    // 更新其他行的下拉选项
+                    updateAllAccountSelects();
                 }
-            });
+            } else {
+                suggestionsDiv.innerHTML = '<div class="p-2 text-muted">没有找到匹配的服务器</div>';
+                suggestionsDiv.classList.remove('hidden');
+
+                // 更新位置
+                updateSuggestionsPosition();
+
+                // 启动位置更新定时器
+                if (positionInterval) {
+                    clearInterval(positionInterval);
+                }
+                positionInterval = setInterval(updateSuggestionsPosition, 100);
+            }
+        });
+
+        // 失去焦点时隐藏建议
+        hostInput.addEventListener('blur', function () {
+            // 添加一个小延迟，确保点击建议项时不会立即隐藏
+            setTimeout(() => {
+                suggestionsDiv.classList.add('hidden');
+                if (positionInterval) {
+                    clearInterval(positionInterval);
+                    positionInterval = null;
+                }
+            }, 200);
+        });
+
+        // 当输入框获得焦点且有内容时，重新显示建议
+        hostInput.addEventListener('focus', function () {
+            if (this.value.trim() && suggestionsDiv.children.length > 0) {
+                suggestionsDiv.classList.remove('hidden');
+                updateSuggestionsPosition();
+
+                // 启动位置更新定时器
+                if (positionInterval) {
+                    clearInterval(positionInterval);
+                }
+                positionInterval = setInterval(updateSuggestionsPosition, 100);
+            }
+        });
+
+        // 当选择主机时更新已选择主机列表
+        hostInput.addEventListener('change', function() {
+            updateSelectedHosts();
+            updateAllAccountSelects();
+        });
+    }
+
+    // 添加新行
+    function addNewRow() {
+        const tbody = document.getElementById('applyTableBody');
+        const newRow = document.createElement('tr');
+        newRow.className = 'apply-row';
+        newRow.innerHTML = `
+            <td>
+                <div class="position-relative" style="height: auto;">
+                    <input type="text" class="form-control host-input" placeholder="输入主机地址" autocomplete="off" required>
+                    <div class="host-suggestions bg-white border rounded shadow-sm hidden"></div>
+                </div>
+            </td>
+            <td>
+                <select class="form-select account-select" required>
+                    <option value="">请选择账号</option>
+                </select>
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-danger btn-sm remove-row-btn">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(newRow);
+        // 确保在下一帧初始化，让DOM完全渲染
+        requestAnimationFrame(() => {
+            initializeRow(newRow);
+        });
+
+        // 更新已选择主机列表
+        updateSelectedHosts();
+    }
+
+    // 移除行
+    function removeRow(row) {
+        if (document.querySelectorAll('.apply-row').length > 1) {
+            row.remove();
+            // 更新已选择主机列表
+            updateSelectedHosts();
+        } else {
+            alert('至少需要保留一行');
+        }
+    }
+
+    // 更新账号选项
+    function updateAccountOptions(selectElement, host) {
+        // 清空选项
+        selectElement.innerHTML = '<option value="">请选择账号</option>';
+
+        // 获取匹配的服务器账号
+        const matchedServers = serversData.filter(server => server.host === host);
+
+        // 添加选项
+        matchedServers.forEach(server => {
+            const option = document.createElement('option');
+            option.value = server.username;
+            option.textContent = server.username;
+            option.dataset.serverId = server.id;
+            selectElement.appendChild(option);
+        });
+
+        // 如果只有一个匹配项，自动选择
+        if (matchedServers.length === 1) {
+            selectElement.value = matchedServers[0].username;
+        }
+    }
+
+    // 处理批量申请
+    function handleBulkApply(e) {
+        e.preventDefault();
+
+        const reason = document.getElementById('reason').value.trim();
+        const duration = document.getElementById('duration').value;
+        const applicant = document.getElementById('applicant').value.trim();
+
+        if (!reason) {
+            alert('请填写申请原因');
+            return;
         }
 
-        // 添加新行
-        function addNewRow() {
-            const tbody = document.getElementById('applyTableBody');
-            const newRow = document.createElement('tr');
-            newRow.className = 'apply-row';
-            newRow.innerHTML = `
+        // 收集所有行的数据
+        const rows = document.querySelectorAll('.apply-row');
+        const applications = [];
+
+        let isValid = true;
+        rows.forEach((row, index) => {
+            const hostInput = row.querySelector('.host-input');
+            const accountSelect = row.querySelector('.account-select');
+
+            const host = hostInput.value.trim();
+            const account = accountSelect.value;
+
+            console.log(`第${index + 1}行数据: host="${host}", account="${account}"`);
+
+            if (!host || !account) {
+                alert(`第${index + 1}行数据不完整，请检查`);
+                isValid = false;
+                return;
+            }
+
+            // 获取服务器ID
+            const selectedOption = accountSelect.options[accountSelect.selectedIndex];
+            console.log(`第${index + 1}行选中选项:`, selectedOption);
+            if (!selectedOption || !selectedOption.dataset.serverId) {
+                alert(`第${index + 1}行数据错误，请重新选择主机和账号`);
+                isValid = false;
+                return;
+            }
+
+            const serverId = selectedOption.dataset.serverId;
+
+            console.log(`第${index + 1}行完整数据: serverId=${serverId}, account_name="${account}", host="${host}"`);
+
+            applications.push({
+                server_id: parseInt(serverId),  // 确保是整数
+                account_name: account,  // 确保账户名正确传递
+                duration: parseFloat(duration) || 0,  // 确保是浮点数，添加默认值
+                reason: reason,
+                host: host
+            });
+        });
+
+        if (!isValid) {
+            console.log("表单验证失败");
+            return;
+        }
+
+        console.log("准备发送的applications数据:", applications);
+
+        // 显示加载状态
+        const submitBtn = document.getElementById('submitBtn');
+        const submitText = document.getElementById('submitText');
+        const originalHTML = submitText.innerHTML;
+
+        // 使用简单直接的方式设置加载状态，避免重复添加loading元素
+        submitText.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>提交中...';
+        submitBtn.disabled = true;
+
+        // 发送批量申请请求
+        fetch('{% url "bulk_apply_permission" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                applications: applications,
+                reason: reason,
+                duration: parseFloat(duration) || 0,  // 确保是浮点数，添加默认值
+                applicant: applicant
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log("收到响应数据:", data);
+                if (data.status === 'notify_sent') {
+                    // 显示OTP验证模态框
+                    showOTPModal(data);
+                } else if (data.status === 'success') {
+                    showBulkResult(data);
+                } else {
+                    alert('批量申请失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('批量申请失败:', error);
+                alert('批量申请失败，请稍后再试');
+            })
+            .finally(() => {
+                // 恢复原始按钮内容
+                submitText.innerHTML = originalHTML;
+                submitBtn.disabled = false;
+            });
+    }
+
+    // 显示OTP验证模态框
+    function showOTPModal(data) {
+        // 创建模态框HTML
+        const modalHtml = `
+            <div class="modal fade" id="otpModal" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="otpModalLabel"><i class="fas fa-shield-alt me-2"></i>管理员令牌验证</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                出于安全考虑，批量申请需要管理员OTP令牌验证。
+                            </div>
+                            <p>请输入管理员令牌验证码以完成批量申请：</p>
+                            <div class="mb-3">
+                                <input type="text" class="form-control" id="otpCodeInput" placeholder="6位数字验证码" maxlength="6" autocomplete="off">
+                                <div class="form-text">需要管理员OTP令牌验证才能完成批量申请</div>
+                            </div>
+                            <input type="hidden" id="unifiedPassword" value="${data.password}">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="button" class="btn btn-primary" id="verifyOTPBtn">
+                                <span id="verifyOTPText"><i class="fas fa-check-circle me-1"></i>验证并完成申请</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // 添加模态框到页面
+        if (!document.getElementById('otpModal')) {
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        // 显示模态框
+        const modal = new bootstrap.Modal(document.getElementById('otpModal'));
+        modal.show();
+
+        // 绑定验证按钮事件
+        document.getElementById('verifyOTPBtn').addEventListener('click', function () {
+            // 防止重复点击
+            if (this.disabled) return;
+
+            const otpCode = document.getElementById('otpCodeInput').value.trim();
+
+            if (!otpCode || otpCode.length !== 6 || !/^\d+$/.test(otpCode)) {
+                alert('请输入有效的6位数字验证码');
+                return;
+            }
+
+            // 显示加载状态
+            const verifyBtn = this;
+            const verifyText = document.getElementById('verifyOTPText');
+            const originalText = verifyText.innerHTML;
+
+            // 使用简单直接的方式设置加载状态，避免重复添加loading元素
+            verifyText.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>验证中...';
+            verifyBtn.disabled = true;
+
+            // 准备应用数据，确保类型正确并包含account_name字段
+            const applications = data.applications.map(app => ({
+                application_id: app.application_id,
+                server_id: parseInt(app.server_id),
+                account_name: app.account_name || app.username,  // 确保account_name字段存在
+                host: app.host,
+                duration: parseFloat(app.duration) || 0,  // 确保是浮点数，添加默认值
+                applicant: app.applicant
+            }));
+
+            console.log("准备发送OTP验证的applications数据:", applications);
+
+            // 发送验证请求
+            fetch('/api/verify-bulk-otp/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    token_code: otpCode,
+                    applications: applications,
+                    password: data.password
+                })
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        // 隐藏OTP模态框
+                        const otpModalElement = document.getElementById('otpModal');
+                        const otpModal = bootstrap.Modal.getInstance(otpModalElement);
+                        if (otpModal) {
+                            otpModal.hide();
+                        }
+
+                        // 显示结果
+                        showBulkResult(result);
+                    } else {
+                        alert('验证失败: ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('验证失败:', error);
+                    alert('验证失败，请稍后再试');
+                })
+                .finally(() => {
+                    // 恢复原始按钮内容
+                    verifyText.innerHTML = originalText;
+                    verifyBtn.disabled = false;
+                });
+        });
+    }
+
+    // 显示批量申请结果
+    function showBulkResult(data) {
+        const resultContent = document.getElementById('resultContent');
+
+        if (data.passwords && data.passwords.length > 0) {
+            let html = `
+                <div class="alert alert-success">
+                    <h5><i class="fas fa-check-circle me-2"></i>批量申请成功！</h5>
+                    <p>所有服务器已更新为统一临时密码，请妥善保管。</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>重要提醒：</strong>请勿关闭此页面，否则忘记密码需要重新申请。
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">统一临时密码：</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="bulkPassword" value="••••••••" readonly>
+                        <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn" title="按住显示密码">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-primary" type="button" id="copyPasswordBtn">
+                            <i class="fas fa-copy me-1"></i>复制密码
+                        </button>
+                    </div>
+                    <div class="form-text mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        按住 <i class="fas fa-eye"></i> 图标显示密码，松开即隐藏
+                    </div>
+                    <div class="form-text">密码有效期至：${data.passwords[0].expiration}</div>
+                </div>
+
+                <h6 class="mt-4 mb-3">申请详情：</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>主机</th>
+                                <th>账号</th>
+                                <th>有效期至</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            data.passwords.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.host}:${item.port}</td>
+                        <td>${item.username}</td>
+                        <td>${item.expiration}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            resultContent.innerHTML = html;
+
+            // 绑定事件
+            bindBulkResultEvents(data.passwords[0].password);
+        } else {
+            resultContent.innerHTML = `
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>申请已提交</h5>
+                    <p>${data.message}</p>
+                </div>
+            `;
+        }
+
+        // 显示模态框
+        const modal = new bootstrap.Modal(document.getElementById('bulkResultModal'));
+        modal.show();
+
+        // 重置表单
+        document.getElementById('bulkApplyForm').reset();
+        document.getElementById('applyTableBody').innerHTML = `
+            <tr class="apply-row">
                 <td>
-                    <div class="position-relative" style="height: auto;">
+                    <div class="position-relative">
                         <input type="text" class="form-control host-input" placeholder="输入主机地址" autocomplete="off" required>
-                        <div class="host-suggestions bg-white border rounded shadow-sm hidden"></div>
+                        <div class="host-suggestions position-absolute bg-white border rounded shadow-sm hidden" style="z-index: 99; width: 100%;"></div>
                     </div>
                 </td>
                 <td>
@@ -491,377 +927,128 @@
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
-            `;
-            tbody.appendChild(newRow);
-            // 确保在下一帧初始化，让DOM完全渲染
-            requestAnimationFrame(() => {
-                initializeRow(newRow);
-            });
-        }
+            </tr>
+        `;
+        initializeRow(document.querySelector('.apply-row'));
+        // 重置已选择主机列表
+        selectedHosts = [];
+    }
 
-        // 移除行
-        function removeRow(row) {
-            if (document.querySelectorAll('.apply-row').length > 1) {
-                row.remove();
-            } else {
-                alert('至少需要保留一行');
-            }
-        }
+    // 绑定批量申请结果页面的事件
+    function bindBulkResultEvents(password) {
+        const passwordInput = document.getElementById('bulkPassword');
+        const toggleBtn = document.getElementById('togglePasswordBtn');
+        const copyBtn = document.getElementById('copyPasswordBtn');
 
-        // 更新账号选项
-        function updateAccountOptions(selectElement, host) {
-            // 清空选项
-            selectElement.innerHTML = '<option value="">请选择账号</option>';
-
-            // 获取匹配的服务器账号
-            const matchedServers = serversData.filter(server => server.host === host);
-
-            // 添加选项
-            matchedServers.forEach(server => {
-                const option = document.createElement('option');
-                option.value = server.username;
-                option.textContent = server.username;
-                option.dataset.serverId = server.id;
-                selectElement.appendChild(option);
-            });
-            
-            // 如果只有一个匹配项，自动选择
-            if (matchedServers.length === 1) {
-                selectElement.value = matchedServers[0].username;
-            }
-        }
-
-        // 处理批量申请
-        function handleBulkApply(e) {
-            e.preventDefault();
-
-            const reason = document.getElementById('reason').value.trim();
-            const duration = document.getElementById('duration').value;
-            const applicant = document.getElementById('applicant').value.trim();
-
-            if (!reason) {
-                alert('请填写申请原因');
-                return;
-            }
-
-            // 收集所有行的数据
-            const rows = document.querySelectorAll('.apply-row');
-            const applications = [];
-
-            let isValid = true;
-            rows.forEach((row, index) => {
-                const hostInput = row.querySelector('.host-input');
-                const accountSelect = row.querySelector('.account-select');
-
-                const host = hostInput.value.trim();
-                const account = accountSelect.value;
-
-                console.log(`第${index + 1}行数据: host="${host}", account="${account}"`);
-
-                if (!host || !account) {
-                    alert(`第${index + 1}行数据不完整，请检查`);
-                    isValid = false;
-                    return;
-                }
-
-                // 获取服务器ID
-                const selectedOption = accountSelect.options[accountSelect.selectedIndex];
-                console.log(`第${index + 1}行选中选项:`, selectedOption);
-                if (!selectedOption || !selectedOption.dataset.serverId) {
-                    alert(`第${index + 1}行数据错误，请重新选择主机和账号`);
-                    isValid = false;
-                    return;
-                }
-
-                const serverId = selectedOption.dataset.serverId;
-
-                console.log(`第${index + 1}行完整数据: serverId=${serverId}, account_name="${account}", host="${host}"`);
-
-                applications.push({
-                    server_id: parseInt(serverId),  // 确保是整数
-                    account_name: account,  // 确保账户名正确传递
-                    duration: parseFloat(duration) || 0,  // 确保是浮点数，添加默认值
-                    reason: reason,
-                    host: host
-                });
+        if (passwordInput && toggleBtn && copyBtn) {
+            // 按住显示，松开隐藏
+            toggleBtn.addEventListener('mousedown', function() {
+                passwordInput.type = 'text';
+                passwordInput.value = password;
+                toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                toggleBtn.title = "松开隐藏密码";
             });
 
-            if (!isValid) {
-                console.log("表单验证失败");
-                return;
-            }
-
-            console.log("准备发送的applications数据:", applications);
-
-            // 显示加载状态
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="loading"></span> 提交中...';
-            submitBtn.disabled = true;
-
-            // 发送批量申请请求
-            fetch('{% url "bulk_apply_permission" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
-                body: JSON.stringify({
-                    applications: applications,
-                    reason: reason,
-                    duration: parseFloat(duration) || 0,  // 确保是浮点数，添加默认值
-                    applicant: applicant
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("收到响应数据:", data);
-                    if (data.status === 'notify_sent') {
-                        // 显示OTP验证模态框
-                        showOTPModal(data);
-                    } else if (data.status === 'success') {
-                        showBulkResult(data);
-                    } else {
-                        alert('批量申请失败: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('批量申请失败:', error);
-                    alert('批量申请失败，请稍后再试');
-                })
-                .finally(() => {
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                });
-        }
-
-
-        // 显示OTP验证模态框
-        function showOTPModal(data) {
-            // 创建模态框HTML
-            const modalHtml = `
-                <div class="modal fade" id="otpModal" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="otpModalLabel"><i class="fas fa-shield-alt me-2"></i>管理员令牌验证</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>
-                                    出于安全考虑，批量申请需要管理员OTP令牌验证。
-                                </div>
-                                <p>请输入管理员令牌验证码以完成批量申请：</p>
-                                <div class="mb-3">
-                                    <input type="text" class="form-control" id="otpCodeInput" placeholder="6位数字验证码" maxlength="6" autocomplete="off">
-                                    <div class="form-text">需要管理员OTP令牌验证才能完成批量申请</div>
-                                </div>
-                                <input type="hidden" id="unifiedPassword" value="${data.password}">
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-primary" id="verifyOTPBtn">
-                                    <span id="verifyOTPText">验证并完成申请</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // 添加模态框到页面
-            if (!document.getElementById('otpModal')) {
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-            }
-
-            // 显示模态框
-            const modal = new bootstrap.Modal(document.getElementById('otpModal'));
-            modal.show();
-
-            // 绑定验证按钮事件
-            document.getElementById('verifyOTPBtn').addEventListener('click', function () {
-                // 防止重复点击
-                if (this.disabled) return;
-
-                const otpCode = document.getElementById('otpCodeInput').value.trim();
-
-                if (!otpCode || otpCode.length !== 6 || !/^\d+$/.test(otpCode)) {
-                    alert('请输入有效的6位数字验证码');
-                    return;
-                }
-
-                // 显示加载状态
-                const verifyBtn = this;
-                const originalText = verifyBtn.innerHTML;
-                verifyBtn.innerHTML = '<span class="loading"></span> 验证中...';
-                verifyBtn.disabled = true;
-
-                // 准备应用数据，确保类型正确并包含account_name字段
-                const applications = data.applications.map(app => ({
-                    application_id: app.application_id,
-                    server_id: parseInt(app.server_id),
-                    account_name: app.account_name || app.username,  // 确保account_name字段存在
-                    host: app.host,
-                    duration: parseFloat(app.duration) || 0,  // 确保是浮点数，添加默认值
-                    applicant: app.applicant
-                }));
-
-                console.log("准备发送OTP验证的applications数据:", applications);
-
-                // 发送验证请求
-                fetch('/api/verify-bulk-otp/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCSRFToken()
-                    },
-                    body: JSON.stringify({
-                        token_code: otpCode,
-                        applications: applications,
-                        password: data.password
-                    })
-                })
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.status === 'success') {
-                            // 隐藏OTP模态框
-                            const otpModalElement = document.getElementById('otpModal');
-                            const otpModal = bootstrap.Modal.getInstance(otpModalElement);
-                            if (otpModal) {
-                                otpModal.hide();
-                            }
-
-                            // 显示结果
-                            showBulkResult(result);
-                        } else {
-                            alert('验证失败: ' + result.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('验证失败:', error);
-                        alert('验证失败，请稍后再试');
-                    })
-                    .finally(() => {
-                        verifyBtn.innerHTML = originalText;
-                        verifyBtn.disabled = false;
-                    });
+            toggleBtn.addEventListener('mouseup', function() {
+                passwordInput.type = 'password';
+                passwordInput.value = '••••••••';
+                toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                toggleBtn.title = "按住显示密码";
             });
+
+            toggleBtn.addEventListener('mouseleave', function() {
+                // 鼠标离开按钮时也隐藏密码
+                passwordInput.type = 'password';
+                passwordInput.value = '••••••••';
+                toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                toggleBtn.title = "按住显示密码";
+            });
+
+            // 对于触摸设备，添加触摸事件支持
+            toggleBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                passwordInput.type = 'text';
+                passwordInput.value = password;
+                toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                toggleBtn.title = "松开隐藏密码";
+            });
+
+            toggleBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                passwordInput.type = 'password';
+                passwordInput.value = '••••••••';
+                toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                toggleBtn.title = "按住显示密码";
+            });
+
+            // 复制按钮事件
+            copyBtn.addEventListener('click', function() {
+                // 无论密码是否可见，都复制真实密码
+                copyTextToClipboard(password);
+            });
+
+            // 自动复制密码到剪贴板
+            copyTextToClipboard(password);
         }
+    }
 
-        // 显示批量申请结果
-        function showBulkResult(data) {
-            const resultContent = document.getElementById('resultContent');
+    // 通用复制文本函数
+    function copyTextToClipboard(text) {
+        // 检查是否支持 Clipboard API
+        if (navigator.clipboard && window.isSecureContext) {
+            // 使用现代 Clipboard API
+            navigator.clipboard.writeText(text).then(() => {
+                alert('密码已复制到剪贴板');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                fallbackCopyTextToClipboard(text);
+            });
+        } else {
+            // 使用备选的复制方法
+            fallbackCopyTextToClipboard(text);
+        }
+    }
 
-            if (data.passwords && data.passwords.length > 0) {
-                let html = `
-                    <div class="alert alert-success">
-                        <h5><i class="fas fa-check-circle me-2"></i>批量申请成功！</h5>
-                        <p>所有服务器已更新为统一临时密码，请妥善保管。</p>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">统一临时密码：</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="bulkPassword" value="${data.passwords[0].password}" readonly>
-                            <button class="btn btn-outline-primary" type="button" id="copyPasswordBtn">
-                                <i class="fas fa-copy me-1"></i>复制密码
-                            </button>
-                        </div>
-                        <div class="form-text">密码已复制到剪贴板，有效期至：${data.passwords[0].expiration}</div>
-                    </div>
-                    
-                    <h6 class="mt-4 mb-3">申请详情：</h6>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>主机</th>
-                                    <th>账号</th>
-                                    <th>有效期至</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
+    // 传统复制方法的辅助函数
+    function fallbackCopyTextToClipboard(text) {
+        try {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
 
-                data.passwords.forEach(item => {
-                    html += `
-                        <tr>
-                            <td>${item.host}:${item.port}</td>
-                            <td>${item.username}</td>
-                            <td>${item.expiration}</td>
-                        </tr>
-                    `;
-                });
+            // 避免滚动到底部
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
 
-                html += `
-                            </tbody>
-                        </table>
-                    </div>
-                `;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
 
-                resultContent.innerHTML = html;
-
-                // 绑定复制按钮事件
-                document.getElementById('copyPasswordBtn').addEventListener('click', function () {
-                    const passwordInput = document.getElementById('bulkPassword');
-                    passwordInput.select();
-                    document.execCommand('copy');
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
                     alert('密码已复制到剪贴板');
-                });
-
-                // 自动复制密码到剪贴板
-                const passwordInput = document.getElementById('bulkPassword');
-                passwordInput.select();
-                document.execCommand('copy');
-            } else {
-                resultContent.innerHTML = `
-                    <div class="alert alert-warning">
-                        <h5><i class="fas fa-exclamation-triangle me-2"></i>申请已提交</h5>
-                        <p>${data.message}</p>
-                    </div>
-                `;
+                } else {
+                    alert('无法自动复制密码，请手动选择并复制');
+                }
+            } catch (err) {
+                console.error('复制失败:', err);
+                alert('无法自动复制密码，请手动选择并复制');
             }
 
-            // 显示模态框
-            const modal = new bootstrap.Modal(document.getElementById('bulkResultModal'));
-            modal.show();
-
-            // 重置表单
-            document.getElementById('bulkApplyForm').reset();
-            document.getElementById('applyTableBody').innerHTML = `
-                <tr class="apply-row">
-                    <td>
-                        <div class="position-relative">
-                            <input type="text" class="form-control host-input" placeholder="输入主机地址" autocomplete="off" required>
-                            <div class="host-suggestions position-absolute bg-white border rounded shadow-sm hidden" style="z-index: 99; width: 100%;"></div>
-                        </div>
-                    </td>
-                    <td>
-                        <select class="form-select account-select" required>
-                            <option value="">请选择账号</option>
-                        </select>
-                    </td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-danger btn-sm remove-row-btn">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-            initializeRow(document.querySelector('.apply-row'));
+            document.body.removeChild(textArea);
+        } catch (err) {
+            console.error('创建文本区域失败:', err);
+            alert('无法自动复制密码，请手动选择并复制');
         }
+    }
 
-        // 获取CSRF令牌
-        function getCSRFToken() {
-            const csrfToken = document.cookie.match(/csrftoken=([^;]+)/);
-            return csrfToken ? csrfToken[1] : '';
-        }
-    </script>
- <!-- 页脚信息 -->
-        <div class="login-footer text-center mt-6">
-            <p>© 2025 权限申请系统 | 版本 1.0.0 | 作者： 王政君 wzj@servyou.com.cn</p>
-        </div>
-</body>
+    // 获取CSRF令牌
+    function getCSRFToken() {
+        const csrfToken = document.cookie.match(/csrftoken=([^;]+)/);
+        return csrfToken ? csrfToken[1] : '';
+    }
+</script>
 
 </html>

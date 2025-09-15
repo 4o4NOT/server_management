@@ -132,15 +132,22 @@ def index(request):
 
     # 获取服务器数据，用于自动完成
     servers = list(ServerInfo.objects.all().values('id', 'host', 'port', 'username', 'description'))
-    
+
     # 获取时长选项
     duration_options = Config.get_duration_options()
-    
+
+    # 获取密码显示模式配置
+    password_display_mode = getattr(Config, 'PASSWORD_DISPLAY_MODE', 'auto_copy')
+
+    # 添加调试日志
+    logger.info(f"密码显示模式配置: {password_display_mode}")
+
     context = {
         'servers': json.dumps(servers),
-        'duration_options': duration_options
+        'duration_options': duration_options,
+        'password_display_mode': password_display_mode,
     }
-    
+
     return render(request, 'index.html', context)
 
 # 登录视图
