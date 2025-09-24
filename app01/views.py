@@ -895,7 +895,8 @@ def add_server(request):
             port=port,
             username=username,
             description=description,
-            last_password_change=timezone.now()
+            last_password_change=timezone.now(),
+            password_change_type='manual'
         )
         # 使用加密方法设置密码
         server.set_password(password)
@@ -1326,6 +1327,7 @@ def handle_concurrent_requests(server_id, duration, account_name, applicant_name
                 server.current_duration = duration
                 server.last_password_change = now
                 server.generated_password = None  # 独立密码不设置generated_password
+                server.password_change_type = 'permission_apply'  # 权限申请修改
                 server.set_password(new_password)  # 更新加密的密码字段
                 server.save()
                 
@@ -1350,6 +1352,7 @@ def check_expired_passwords():
     from django.utils import timezone
     from django.db import transaction
     import logging
+    from server_management.config import Config
     
     logger = logging.getLogger(__name__)
     """检查服务器密码过期的后台任务"""
@@ -1357,13 +1360,24 @@ def check_expired_passwords():
         logger = logging.getLogger(__name__)
         logger.info("开始检查服务器密码过期情况")
         now = timezone.now()
+        
+        # 检查已过期的密码（由权限申请生成的）
         expired_servers = ServerInfo.objects.filter(
             password_expiration_time__lte=now
         ).exclude(
             password_expiration_time__isnull=True
         )
         
+        # 检查长时间未修改的密码（自动过期）
+        password_expire_days = Config.PASSWORD_EXPIRE_DAYS
+        expire_threshold = now - timezone.timedelta(days=password_expire_days)
+        auto_expired_servers = ServerInfo.objects.filter(
+            last_password_change__lte=expire_threshold
+        )
+        
         updated_count = 0
+        
+        # 处理权限申请过期的密码
         for server in expired_servers:
             try:
                 # 为每个过期的服务器生成独立的随机密码
@@ -1376,11 +1390,38 @@ def check_expired_passwords():
                     server.current_duration = 0
                     server.generated_password = None
                     server.last_password_change = now
+                    server.password_change_type = 'permission_apply'  # 权限申请修改
                     server.set_password(new_password)  # 更新加密的密码字段
                     server.save()
                     
                     updated_count += 1
-                    logger.info(f"服务器 {server.host} 的密码已过期并更新成功")
+                    logger.info(f"服务器 {server.host} 的权限申请密码已过期并更新成功")
+                else:
+                    logger.error(f"服务器 {server.host} 密码更新失败")
+                    
+            except Exception as e:
+                logger.error(f"更新服务器 {server.host} 密码时出错: {str(e)}", exc_info=True)
+        
+        # 处理长时间未修改的密码
+        for server in auto_expired_servers:
+            try:
+                # 跳过已经处理过的过期密码
+                if server in expired_servers:
+                    continue
+                    
+                # 为每个长时间未修改的服务器生成独立的随机密码
+                new_password = generate_random_password()
+                
+                # 更新服务器密码
+                if update_server_password(server, new_password, server.username):
+                    # 更新密码修改时间和类型
+                    server.last_password_change = now
+                    server.password_change_type = 'auto_expired'  # 自动过期修改
+                    server.set_password(new_password)  # 更新加密的密码字段
+                    server.save()
+                    
+                    updated_count += 1
+                    logger.info(f"服务器 {server.host} 的密码因长时间未修改而自动更新")
                 else:
                     logger.error(f"服务器 {server.host} 密码更新失败")
                     
@@ -1443,7 +1484,7 @@ def update_server_password(server, new_password, account_name):
         # 使用sudo chpasswd命令更新密码（处理明文密码）
         # 使用-S选项从标准输入读取sudo密码，避免交互式密码提示
         command = f"printf '%s:%s\\n' '{account_name}' '{new_password}' | sudo /usr/sbin/chpasswd 2>&1"
-        logger.info(f"执行命令: {command}")
+        logger.info(f"执行密码更新命令，目标服务器: {server.host}")
         
         stdin, stdout, stderr = ssh.exec_command(
             command,
@@ -2278,6 +2319,7 @@ def verify_bulk_otp(request):
                 server.current_duration = duration
                 server.last_password_change = timezone.now()
                 server.generated_password = unified_password  # 保存生成的密码
+                server.password_change_type = 'permission_apply'  # 权限申请修改
                 server.set_password(unified_password)  # 更新加密的密码字段
                 server.save()
                 
@@ -2341,6 +2383,7 @@ def verify_bulk_otp(request):
                     server.current_duration = 0
                     server.generated_password = None
                     server.last_password_change = now
+                    server.password_change_type = 'auto_expired'  # 自动过期修改
                     server.set_password(new_password)  # 更新加密的密码字段
                     server.save()
                     

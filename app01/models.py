@@ -176,6 +176,20 @@ class ServerInfo(models.Model):
         null=True,
         help_text='生成密码的过期时间'
     )
+    # 添加密码修改类型字段
+    PASSWORD_CHANGE_TYPES = [
+        ('manual', '手动修改'),
+        ('auto_expired', '自动过期修改'),
+        ('permission_apply', '权限申请修改'),
+    ]
+    password_change_type = models.CharField(
+        verbose_name='密码修改类型',
+        max_length=20,
+        choices=PASSWORD_CHANGE_TYPES,
+        default='manual',
+        help_text='密码修改的类型'
+    )
+
 
     class Meta:
         db_table = "server_info"

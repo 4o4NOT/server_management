@@ -43,6 +43,7 @@ DEFAULT_CONFIG = {
     'tasks': {
         'RUN_BACKGROUND_TASKS': 'True',
         'PASSWORD_CHECK_INTERVAL': '300',
+        'PASSWORD_EXPIRE_DAYS': '90',
     },
     'otp': {
         'VALID_WINDOW': '2',
@@ -135,6 +136,7 @@ class Config:
     # 任务配置
     RUN_BACKGROUND_TASKS = app_config.getboolean('tasks', 'RUN_BACKGROUND_TASKS', fallback=DEFAULT_CONFIG['tasks']['RUN_BACKGROUND_TASKS'] == 'True')
     PASSWORD_CHECK_INTERVAL = app_config.getint('tasks', 'PASSWORD_CHECK_INTERVAL', fallback=int(DEFAULT_CONFIG['tasks']['PASSWORD_CHECK_INTERVAL']))
+    PASSWORD_EXPIRE_DAYS = app_config.getint('tasks', 'PASSWORD_EXPIRE_DAYS', fallback=int(DEFAULT_CONFIG['tasks']['PASSWORD_EXPIRE_DAYS']))
 
     # OTP配置
     OTP_VALID_WINDOW = app_config.getint('otp', 'VALID_WINDOW', fallback=int(DEFAULT_CONFIG['otp']['VALID_WINDOW']))
@@ -174,5 +176,6 @@ class Config:
         logger.info(f"钉钉Webhook URL: {cls.DINGTALK_WEBHOOK_URL}")
         logger.info(f"SSH连接超时: {cls.SSH_CONNECT_TIMEOUT}秒")
         logger.info(f"后台任务启用: {cls.RUN_BACKGROUND_TASKS}")
+        logger.info(f"密码过期天数: {cls.PASSWORD_EXPIRE_DAYS}天")
         logger.info(f"OTP验证窗口期: {cls.OTP_VALID_WINDOW}")
         logger.info("=============== ")
