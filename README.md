@@ -93,6 +93,15 @@ bash
 
 python manage.py runserver
 ```
+7.**配置sudo（重要）**
+程序执行更改目标用户密码时用的时chpasswd命令，为了避免权限问题导致的无法执行，需要配置sudo
+```
+# 使用visudo命令编辑
+sudo visudo
+
+# 添加以下行（将your_ssh_username替换为实际用户名）
+your_ssh_username ALL=(ALL) NOPASSWD: /usr/sbin/chpasswd
+```
 
 ## 配置文件说明
 系统使用 config.ini 配置文件来管理各种参数，包括数据库连接、钉钉集成、安全设置等。
@@ -145,6 +154,15 @@ connect_timeout = 10
 # SSH命令执行超时时间（秒）
 exec_timeout = 30
 
+[tasks]
+# 后台任务配置部分，用于配置系统后台任务的执行参数
+# 是否启用后台任务处理
+run_background_tasks = True
+# 密码检查间隔时间（秒），用于定期检查和更新过期密码
+password_check_interval = 300
+# 服务器密码过期天数，超过此天数未修改的密码将自动更新
+password_expire_days = 90
+
 [otp]
 # OTP令牌配置部分，用于配置一次性密码相关参数
 # OTP验证窗口期（默认为1，表示前后各1个时间段）
@@ -155,6 +173,8 @@ valid_window = 3
 # 可申请的时长选项（单位：小时）
 # 格式：选项值=显示名称
 duration_options = 0.5=0.5小时,1=1小时,2=2小时,4=4小时
+# 密码显示方式：auto_copy（自动复制到剪贴板）或 manual（手动复制）
+password_display_mode = auto_copy
 ```
 
 ## 使用说明
