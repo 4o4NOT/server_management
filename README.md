@@ -250,14 +250,6 @@ password_display_mode = auto_copy
 + `POST /verify_bulk_otp/` - 验证批量申请OTP
 
 ## 维护管理
-### 定时任务
-系统包含密码过期检查功能，建议设置定时任务定期执行：
-
-```plain
-bash
-
-python manage.py shell -c "from app01.views import check_expired_passwords; check_expired_passwords()"
-```
 
 ### 日志查看
 系统日志记录在Django默认日志文件中，可以查看用户操作和系统异常。
