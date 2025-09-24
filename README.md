@@ -94,7 +94,8 @@ bash
 python manage.py runserver
 ```
 7.**配置sudo（重要）**
-程序执行更改目标用户密码时用的时chpasswd命令，为了避免权限问题导致的无法执行，需要配置sudo
+
+程序执行更改目标用户密码时采用chpasswd命令，为了避免权限问题导致的无法执行，需要在每台需要管理密码的服务器上设置sudo相关的配置
 ```
 # 使用visudo命令编辑
 sudo visudo
