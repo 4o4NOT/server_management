@@ -173,105 +173,6 @@ function showPasswordOTPModal(serverId, passwordTextElement, toggleButton) {
     });
 }
 
-// 加载服务器列表
-function loadServers() {
-    // 显示加载状态
-    const tableBody = document.getElementById('serversTableBody');
-    tableBody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">加载中...</span>
-                    </div>
-                    正在加载服务器列表...
-                </td>
-            </tr>
-        `;
-
-    document.getElementById('noServersMessage').classList.add('d-none');
-
-    fetch('/server_management/', {
-        headers: {
-            'x-requested-with': 'XMLHttpRequest',
-            'Accept': 'application/json'
-        },
-        credentials: 'include'  // 包含cookie
-    })
-        .then(response => {
-            if (response.status === 403) {
-                throw new Error('权限不足，仅管理员可访问');
-            }
-            if (!response.ok) {
-                throw new Error('网络响应异常');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                const servers = data.data;
-                const tableBody = document.getElementById('serversTableBody');
-                const noServersMessage = document.getElementById('noServersMessage');
-
-                tableBody.innerHTML = '';
-
-                if (servers.length === 0) {
-                    noServersMessage.classList.remove('d-none');
-                    return;
-                }
-
-                noServersMessage.classList.add('d-none');
-
-                servers.forEach((server, index) => {
-                    // 存储密码明文
-                    passwordMap.set(`server-${index}`, server.password || '');
-
-                    const row = document.createElement('tr');
-
-                    // 创建操作列
-                    const actionCell = document.createElement('td');
-                    actionCell.className = 'action-buttons';
-                    actionCell.innerHTML = `
-                        <button class="btn btn-sm btn-warning edit-server me-1" data-id="${server.id}" title="编辑">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger delete-server" data-id="${server.id}" title="删除">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    `;
-
-                    row.innerHTML = `
-                    <td>${server.target_host}</td>
-                    <td>${server.target_port}</td>
-                    <td>${server.username}</td>
-                    <td class="password-cell">
-                        <span class="password-text">••••••••</span>
-                        <button class="toggle-password" data-index="${index}" data-server-id="${server.id}" data-visible="false">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </td>
-                    <td>${server.description || '-'}</td>
-                `;
-
-                    // 添加操作列
-                    row.appendChild(actionCell);
-                    tableBody.appendChild(row);
-                });
-
-
-                // 绑定操作按钮事件
-                bindServerActions();
-            } else {
-                throw new Error(data.message || '获取服务器列表失败');
-            }
-        })
-        .catch(error => {
-            console.error('加载服务器列表失败:', error);
-            document.getElementById('serversTableBody').innerHTML = '';
-            const noServersMessage = document.getElementById('noServersMessage');
-            noServersMessage.classList.remove('d-none');
-            noServersMessage.innerHTML = `<i class="fas fa-ban me-1"></i>${error.message}`;
-        });
-}
 
 // 绑定服务器操作事件
 function bindServerActions() {
@@ -414,36 +315,39 @@ function deleteServer(event) {
             },
             credentials: 'include'  // 包含cookie
         })
-        .then(response => {
-            // 检查响应是否成功
-            if (!response.ok) {
-                throw new Error(`HTTP错误! 状态: ${response.status}`);
-            }
-            // 尝试解析JSON，如果失败则返回默认错误对象
-            return response.json().catch(() => {
-                return {
-                    status: 'error',
-                    message: '服务器返回了无效的响应格式'
-                };
+            .then(response => {
+                // 检查响应是否成功
+                if (!response.ok) {
+                    throw new Error(`HTTP错误! 状态: ${response.status}`);
+                }
+                // 尝试解析JSON，如果失败则返回默认错误对象
+                return response.json().catch(() => {
+                    return {
+                        status: 'error',
+                        message: '服务器返回了无效的响应格式'
+                    };
+                });
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('服务器删除成功');
+                    //loadServers(); // 刷新列表
+                    if (typeof serverManagement !== 'undefined' && serverManagement) {
+                        serverManagement.loadServers(); // 新的方式
+                    }
+                } else {
+                    throw new Error(data.message || '删除失败');
+                }
+            })
+            .catch(error => {
+                console.error('删除服务器失败:', error);
+                alert('删除失败: ' + error.message);
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                button.innerHTML = originalHTML;
+                button.disabled = false;
             });
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                alert('服务器删除成功');
-                loadServers(); // 刷新列表
-            } else {
-                throw new Error(data.message || '删除失败');
-            }
-        })
-        .catch(error => {
-            console.error('删除服务器失败:', error);
-            alert('删除失败: ' + error.message);
-        })
-        .finally(() => {
-            // 恢复按钮状态
-            button.innerHTML = originalHTML;
-            button.disabled = false;
-        });
     }
 }
 
@@ -513,12 +417,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 添加事件委托来处理密码切换
     document.addEventListener('click', handlePasswordToggle);
-    loadServers();
-    
+
     // 绑定表单提交事件（只绑定一次）
     if (serverForm) {
         serverForm.removeEventListener('submit', handleFormSubmit);
         serverForm.addEventListener('submit', handleFormSubmit);
+    }
+
+    // 确保 ServerManagement 类正常初始化
+    if (typeof serverManagement !== 'undefined' && serverManagement) {
+        serverManagement.loadServers();
     }
 });
 
@@ -603,7 +511,7 @@ function handleFormSubmit(e) {
     const method = isEditMode ? 'POST' : 'POST';
 
     console.log("请求URL和方法:", {url, method});
-    
+
     // 尝试将formData转换为JSON字符串
     let jsonData;
     try {
@@ -628,41 +536,281 @@ function handleFormSubmit(e) {
         body: jsonData,
         credentials: 'include'  // 包含cookie
     })
-    .then(response => {
-        console.log("收到响应:", response.status, response.statusText);
-        return response.json();
-    })
-    .then(data => {
-        console.log("响应数据:", data);
-        if (data.status === 'success') {
-            // 显示成功消息
-            alert(isEditMode ? '服务器更新成功!' : '服务器添加成功!');
-            
-            // 重置表单
-            document.getElementById('serverForm').reset();
-            
-            // 重新加载服务器列表
-            loadServers(); 
+        .then(response => {
+            console.log("收到响应:", response.status, response.statusText);
+            return response.json();
+        })
+        .then(data => {
+            console.log("响应数据:", data);
+            if (data.status === 'success') {
+                // 显示成功消息
+                alert(isEditMode ? '服务器更新成功!' : '服务器添加成功!');
 
-            // 重置编辑模式
-            if (isEditMode) {
-                resetFormToAddMode();
+                // 重置表单
+                document.getElementById('serverForm').reset();
+
+                // 重新加载服务器列表
+                //loadServers();
+
+                if (typeof serverManagement !== 'undefined' && serverManagement) {
+                    serverManagement.loadServers(); // 新的方式
+                }
+                // 重置编辑模式
+                if (isEditMode) {
+                    resetFormToAddMode();
+                }
+            } else {
+                throw new Error(data.message || (isEditMode ? '更新失败' : '添加失败'));
             }
-        } else {
-            throw new Error(data.message || (isEditMode ? '更新失败' : '添加失败'));
-        }
-    })
-    .catch(error => {
-        console.error(isEditMode ? '更新服务器失败:' : '添加服务器失败:', error);
-        alert((isEditMode ? '更新服务器失败: ' : '添加服务器失败: ') + error.message);
-    })
-    .finally(() => {
-        // 确保按钮状态被重置
-        if (submitBtn) {
-            submitBtn.innerHTML = isEditMode ? 
-                '<span id="updateText"><i class="fas fa-save"></i>更新服务器</span>' : 
-                '<span id="submitText"><i class="fas fa-plus"></i>添加服务器</span>';
-            submitBtn.disabled = false;
-        }
-    });
+        })
+        .catch(error => {
+            console.error(isEditMode ? '更新服务器失败:' : '添加服务器失败:', error);
+            alert((isEditMode ? '更新服务器失败: ' : '添加服务器失败: ') + error.message);
+        })
+        .finally(() => {
+            // 确保按钮状态被重置
+            if (submitBtn) {
+                submitBtn.innerHTML = isEditMode ?
+                    '<span id="updateText"><i class="fas fa-save"></i>更新服务器</span>' :
+                    '<span id="submitText"><i class="fas fa-plus"></i>添加服务器</span>';
+                submitBtn.disabled = false;
+            }
+        });
 }
+
+// 服务器管理页面的 JavaScript 功能
+class ServerManagement {
+    constructor() {
+        this.currentPage = 1;
+        this.pageSize = 10;
+        this.totalServers = 0;
+        this.searchQuery = '';
+        this.serversData = [];
+
+        this.init();
+    }
+
+    init() {
+        // 绑定事件
+        this.bindEvents();
+        // 加载服务器列表
+        this.loadServers();
+    }
+
+    bindEvents() {
+        // 搜索事件
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+
+        if (searchInput) {
+            searchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    this.searchServers();
+                }
+            });
+        }
+
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => {
+                this.searchServers();
+            });
+        }
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadServers();
+            });
+        }
+    }
+
+    // 搜索服务器
+    searchServers() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            this.searchQuery = searchInput.value.trim();
+            this.currentPage = 1;
+            this.loadServers();
+        }
+    }
+
+    // 加载服务器列表
+    loadServers() {
+        // 显示加载状态
+        this.showLoading();
+
+        // 构造请求参数
+        const params = new URLSearchParams();
+        params.append('page', this.currentPage);
+        params.append('page_size', this.pageSize);
+
+        if (this.searchQuery) {
+            params.append('search', this.searchQuery);
+        }
+
+        fetch(`/server_management/?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.serversData = data.data.servers;
+                    this.totalServers = data.data.total;
+                    this.renderServers();
+                    this.renderPagination();
+                    this.updatePaginationInfo();
+                } else {
+                    this.showError('加载服务器列表失败');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.showError('加载服务器列表时发生错误');
+            });
+    }
+
+    // 显示加载状态
+    showLoading() {
+        const tbody = document.getElementById('serversTableBody');
+        if (tbody) {
+            tbody.innerHTML = `                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        正在加载服务器列表...
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // 显示错误信息
+    showError(message) {
+        const tbody = document.getElementById('serversTableBody');
+        if (tbody) {
+            tbody.innerHTML = `                <tr>
+                    <td colspan="6" class="text-center py-4 text-danger">
+                        <i class="fas fa-exclamation-triangle me-1"></i>${message}                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // 渲染服务器列表
+    renderServers() {
+        const tbody = document.getElementById('serversTableBody');
+        if (!tbody) return;
+
+        if (this.serversData.length === 0) {
+            document.getElementById('noServersMessage')?.classList.remove('d-none');
+            tbody.innerHTML = '';
+            return;
+        }
+
+        document.getElementById('noServersMessage')?.classList.add('d-none');
+
+        tbody.innerHTML = this.serversData.map(server => `            <tr>
+                <td>${server.host}</td>
+                <td>${server.port}</td>
+                <td>${server.username}</td>
+                <td>******</td>
+                <td>${server.description || ''}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="serverManagement.editServer(${server.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="serverManagement.deleteServer(${server.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // 渲染分页控件
+    renderPagination() {
+        const paginationControls = document.getElementById('paginationControls');
+        if (!paginationControls) return;
+
+        const totalPages = Math.ceil(this.totalServers / this.pageSize);
+        if (totalPages <= 1) {
+            paginationControls.innerHTML = '';
+            return;
+        }
+
+        let paginationHTML = '';
+
+        // 上一页按钮
+        if (this.currentPage > 1) {
+            paginationHTML += `                <li class="page-item">
+                    <a class="page-link" href="#" onclick="serverManagement.goToPage(${this.currentPage - 1})">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `;
+        }
+
+        // 页码按钮
+        const startPage = Math.max(1, this.currentPage - 2);
+        const endPage = Math.min(totalPages, this.currentPage + 2);
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `                <li class="page-item ${i === this.currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="serverManagement.goToPage(${i})">${i}</a>
+                </li>
+            `;
+        }
+
+        // 下一页按钮
+        if (this.currentPage < totalPages) {
+            paginationHTML += `                <li class="page-item">
+                    <a class="page-link" href="#" onclick="serverManagement.goToPage(${this.currentPage + 1})">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `;
+        }
+
+        paginationControls.innerHTML = paginationHTML;
+    }
+
+    // 更新分页信息
+    updatePaginationInfo() {
+        const paginationInfo = document.getElementById('paginationInfo');
+        if (!paginationInfo) return;
+
+        const start = this.totalServers > 0 ? (this.currentPage - 1) * this.pageSize + 1 : 0;
+        const end = Math.min(this.currentPage * this.pageSize, this.totalServers);
+
+        paginationInfo.textContent = `显示第 ${start} 到 ${end} 项，共 ${this.totalServers} 项`;
+    }
+
+    // 跳转到指定页
+    goToPage(page) {
+        this.currentPage = page;
+        this.loadServers();
+    }
+
+    // 编辑服务器
+    editServer(serverId) {
+        // 实现编辑服务器逻辑
+        console.log('Edit server:', serverId);
+    }
+
+    // 删除服务器
+    deleteServer(serverId) {
+        // 实现删除服务器逻辑
+        console.log('Delete server:', serverId);
+    }
+}
+
+// 初始化服务器管理功能
+let serverManagement;
+document.addEventListener('DOMContentLoaded', function() {
+    serverManagement = new ServerManagement();
+});

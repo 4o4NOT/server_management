@@ -620,16 +620,38 @@ def server_management(request):
     # 处理API请求（前端JavaScript发起的请求）
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         try:
-            # 获取所有服务器信息
+            # 获取分页和搜索参数
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            search_query = request.GET.get('search', '').strip()
+
+            # 构建查询
             servers = ServerInfo.objects.all()
+
+            # 应用搜索过滤
+            if search_query:
+                servers = servers.filter(
+                    Q(host__icontains=search_query) |
+                    Q(username__icontains=search_query)
+                )
+
+            # 获取总数
+            total_servers = servers.count()
+
+            # 应用分页
+            paginator = Paginator(servers, page_size)
+            try:
+                servers_page = paginator.page(page)
+            except EmptyPage:
+                servers_page = paginator.page(paginator.num_pages)
 
             # 构建响应数据
             server_list = []
-            for server in servers:
+            for server in servers_page:
                 server_list.append({
                     'id': server.id,
-                    'target_host': server.host,
-                    'target_port': server.port,
+                    'host': server.host,
+                    'port': server.port,
                     'username': server.username,
                     'password': '******',  # 不直接返回密码
                     'description': server.description or ''
@@ -637,8 +659,14 @@ def server_management(request):
 
             return JsonResponse({
                 'status': 'success',
-                'data': server_list
+                'data': {
+                    'servers': server_list,
+                    'total': total_servers,
+                    'current_page': page,
+                    'total_pages': paginator.num_pages
+                }
             })
+
         except Exception as e:
             logger.error(f"获取服务器列表失败: {str(e)}")
             return JsonResponse({
@@ -647,9 +675,7 @@ def server_management(request):
             }, status=500)
 
     # 处理普通页面请求
-    servers = ServerInfo.objects.all()
-    return render(request, 'server_management.html', {'servers': servers})
-
+    return render(request, 'server_management.html')
 
 # 获取用户令牌信息
 @login_required
