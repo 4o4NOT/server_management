@@ -63,7 +63,7 @@ def send_dingtalk_message(title, content):
         }
         response = requests.post(DINGTALK_WEBHOOK_URL, headers=headers, data=json.dumps(data))
         if response.status_code == 200:
-            logger.info("钉钉消息发送成功")
+            logger.debug("钉钉消息发送成功")
         else:
             logger.error(f"钉钉消息发送失败，状态码: {response.status_code}")
     except Exception as e:
@@ -153,10 +153,10 @@ def index(request):
 # 登录视图
 def user_login(request):
     """登录视图，处理用户登录请求"""
-    logger.debug("收到登录请求，方法: %s", request.method)
+    logger.debug("收到登录请求")
 
     if request.method == 'GET':
-        logger.debug("返回登录页面")
+        #logger.debug("返回登录页面")
         return render(request, 'login.html')
 
     if request.method == 'POST':
@@ -179,6 +179,7 @@ def user_login(request):
 
         # 验证密码
         if not user.check_password(password):
+            logger.warning(f"登录失败: 用户 {identifier} 密码错误")
             return JsonResponse({
                 'status': 'error',
                 'message': '用户名或密码不正确'
@@ -202,6 +203,7 @@ def user_login(request):
         if authenticated_user is not None:
             # 明确指定认证后端
             auth_login(request, authenticated_user, backend='app01.views.CustomModelBackend')
+            logger.info(f"用户 {user.user_name} 登录成功")
         else:
             logger.error("认证后端返回的用户为空")
             return JsonResponse({
@@ -426,21 +428,21 @@ def delete_user(request, user_id):
 
     try:
         user = UserInfo.objects.get(id=user_id)
-        
+
         # 不能删除其他管理员
         if user.is_superuser:
             return JsonResponse({
                 'status': 'error',
                 'message': '不能删除管理员用户'
             }, status=403)
-            
+
         # 不能删除自己
         if user.id == request.user.id:
             return JsonResponse({
                 'status': 'error',
                 'message': '不能删除当前登录的用户'
             }, status=400)
-            
+
         user.delete()
         return JsonResponse({
             'status': 'success',
@@ -471,7 +473,7 @@ def toggle_user_active(request, user_id):
 
     try:
         user = UserInfo.objects.get(id=user_id)
-        
+
         # 管理员不能操作其他管理员账户
         if user.is_superuser and user.id != request.user.id:
             return JsonResponse({
@@ -525,14 +527,14 @@ def reset_password(request, user_id):
 
     try:
         user = UserInfo.objects.get(id=user_id)
-        
+
         # 不能重置其他管理员的密码
         if user.is_superuser and user.id != request.user.id:
             return JsonResponse({
                 'status': 'error',
                 'message': '不能重置其他管理员的密码'
             }, status=403)
-        
+
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_new_password')
 
@@ -721,7 +723,7 @@ def generate_token(request, user_id):
                 'status': 'error',
                 'message': f'系统中已存在令牌（属于用户：{existing_token_user.user_name}），不允许多个令牌'
             }, status=400)
-        
+
         user = UserInfo.objects.get(id=user_id)
         # 生成新的OTP密钥
         user.otp_secret = pyotp.random_base32()
@@ -819,7 +821,7 @@ def add_server(request):
     logger.debug(f"请求内容类型: {request.content_type}")
     logger.debug(f"请求体大小: {len(request.body)} 字节")
     logger.debug(f"请求体内容: {request.body}")
-    
+
     if not request.user.is_superuser:
         response = JsonResponse({
             'status': 'error',
@@ -895,7 +897,7 @@ def add_server(request):
             }, status=400)
             response['Server'] = ''  # 移除Server头信息
             return response
-        
+
         # 检查主机地址和用户组合是否已存在
         if ServerInfo.objects.filter(host=host, username=username).exists():
             response = JsonResponse({
@@ -927,7 +929,7 @@ def add_server(request):
         # 使用加密方法设置密码
         server.set_password(password)
         server.save()
-        
+
         logger.info(f"管理员 {request.user.user_name} 添加了服务器 {host}:{port}")
 
         response = JsonResponse({
@@ -963,7 +965,7 @@ def test_ssh_connection(host, port, username, password):
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        
+
         # 尝试连接
         ssh.connect(
             hostname=host,
@@ -973,13 +975,13 @@ def test_ssh_connection(host, port, username, password):
             timeout=10,
             look_for_keys=False
         )
-        
+
         # 执行简单命令测试连接
         stdin, stdout, stderr = ssh.exec_command('echo "SSH connection test successful"')
         exit_status = stdout.channel.recv_exit_status()
-        
+
         ssh.close()
-        
+
         if exit_status == 0:
             return {
                 'success': True,
@@ -990,7 +992,7 @@ def test_ssh_connection(host, port, username, password):
                 'success': False,
                 'message': 'SSH命令执行失败'
             }
-            
+
     except paramiko.AuthenticationException:
         if ssh:
             ssh.close()
@@ -1123,7 +1125,7 @@ def apply_permission(request):
 
         if not account_name or duration <= 0:
             return JsonResponse({"status": "error", "message": "账户名或时长无效"}, status=400)
-        
+
         if not reason:
             return JsonResponse({"status": "error", "message": "请填写申请原因"}, status=400)
 
@@ -1155,7 +1157,7 @@ def apply_permission(request):
             application.save()
             return JsonResponse({"status": "error", "message": "未找到已激活的管理员令牌"}, status=400)
 
-        totp = pyotp.TOTP(admin_user.otp_secret, interval=30, digits=6, digest='sha1', 
+        totp = pyotp.TOTP(admin_user.otp_secret, interval=30, digits=6, digest='sha1',
                           name=admin_user.user_name, issuer='权限管理系统')
         otp_code = totp.now()
 
@@ -1178,7 +1180,7 @@ def apply_permission(request):
         )
         send_dingtalk_message(title, content)
 
-        logger.info(f"已发送钉钉通知，等待用户输入OTP。申请人: {user.user_name}, 服务器: {server.host}")
+        logger.info(f"权限申请已提交: 用户={user.user_name}, 服务器={server.host}, 时长={duration}小时")
 
         return JsonResponse({
             "status": "notify_sent",
@@ -1322,15 +1324,15 @@ def handle_concurrent_requests(server_id, duration, account_name, applicant_name
     """
     try:
         logger.info(f"处理并发请求: server_id={server_id}, duration={duration}小时, account={account_name}")
-        
+
         with transaction.atomic():
             # 锁定服务器记录以防止并发问题
             server = ServerInfo.objects.select_for_update().get(id=server_id)
-            
+
             now = timezone.now()
             # 计算过期时间（支持小数小时）
             expiration_time = now + timedelta(hours=duration)
-            
+
             # 检查是否已有未过期的密码
             if server.password_expiration_time and server.password_expiration_time > now:
                 # 如果有未过期的密码，检查是否是批量申请的统一密码
@@ -1342,10 +1344,10 @@ def handle_concurrent_requests(server_id, duration, account_name, applicant_name
                     # 这是单独申请的密码，不允许共享
                     logger.info(f"服务器 {server.host} 已有未过期的独立密码")
                     return (server.get_password(), True, server.current_duration, server.password_expiration_time)
-            
+
             # 生成新密码
             new_password = generate_random_password()
-            
+
             # 更新服务器密码
             if update_server_password(server, new_password, account_name):
                 # 更新服务器记录
@@ -1356,13 +1358,13 @@ def handle_concurrent_requests(server_id, duration, account_name, applicant_name
                 server.password_change_type = 'permission_apply'  # 权限申请修改
                 server.set_password(new_password)  # 更新加密的密码字段
                 server.save()
-                
+
                 logger.info(f"服务器 {server.host} 密码处理成功")
                 return (new_password, False, duration, expiration_time)
             else:
                 logger.error(f"更新服务器 {server.host} 密码失败")
                 return None
-                
+
     except ServerInfo.DoesNotExist:
         logger.error(f"服务器ID {server_id} 不存在")
         return None
@@ -1379,36 +1381,40 @@ def check_expired_passwords():
     from django.db import transaction
     import logging
     from server_management.config import Config
-    
-    logger = logging.getLogger(__name__)
+
     """检查服务器密码过期的后台任务"""
     try:
         logger = logging.getLogger(__name__)
-        logger.info("开始检查服务器密码过期情况")
+        #logger.info("开始检查服务器密码过期情况")
         now = timezone.now()
-        
+
         # 检查已过期的密码（由权限申请生成的）
         expired_servers = ServerInfo.objects.filter(
             password_expiration_time__lte=now
         ).exclude(
             password_expiration_time__isnull=True
         )
-        
+
         # 检查长时间未修改的密码（自动过期）
         password_expire_days = Config.PASSWORD_EXPIRE_DAYS
         expire_threshold = now - timezone.timedelta(days=password_expire_days)
         auto_expired_servers = ServerInfo.objects.filter(
             last_password_change__lte=expire_threshold
         )
-        
+
         updated_count = 0
-        
+        # 只有在有需要处理的服务器时才输出日志
+        if expired_servers.exists() or auto_expired_servers.exists():
+            logger.info("开始检查服务器密码过期情况")
+
         # 处理权限申请过期的密码
+        if expired_servers.exists():
+            logger.info(f"发现 {expired_servers.count()} 个权限申请过期的服务器")
         for server in expired_servers:
             try:
                 # 为每个过期的服务器生成独立的随机密码
                 new_password = generate_random_password()
-                
+
                 # 更新服务器密码
                 if update_server_password(server, new_password, server.username):
                     # 清除过期时间和其他相关字段
@@ -1419,25 +1425,27 @@ def check_expired_passwords():
                     server.password_change_type = 'permission_apply'  # 权限申请修改
                     server.set_password(new_password)  # 更新加密的密码字段
                     server.save()
-                    
+
                     updated_count += 1
                     logger.info(f"服务器 {server.host} 的权限申请密码已过期并更新成功")
                 else:
                     logger.error(f"服务器 {server.host} 密码更新失败")
-                    
+
             except Exception as e:
                 logger.error(f"更新服务器 {server.host} 密码时出错: {str(e)}", exc_info=True)
-        
+
         # 处理长时间未修改的密码
+        if auto_expired_servers.exists():
+            logger.info(f"发现 {auto_expired_servers.count()} 个长时间未修改密码的服务器")
         for server in auto_expired_servers:
             try:
                 # 跳过已经处理过的过期密码
                 if server in expired_servers:
                     continue
-                    
+
                 # 为每个长时间未修改的服务器生成独立的随机密码
                 new_password = generate_random_password()
-                
+
                 # 更新服务器密码
                 if update_server_password(server, new_password, server.username):
                     # 更新密码修改时间和类型
@@ -1445,18 +1453,23 @@ def check_expired_passwords():
                     server.password_change_type = 'auto_expired'  # 自动过期修改
                     server.set_password(new_password)  # 更新加密的密码字段
                     server.save()
-                    
+
                     updated_count += 1
                     logger.info(f"服务器 {server.host} 的密码因长时间未修改而自动更新")
                 else:
                     logger.error(f"服务器 {server.host} 密码更新失败")
-                    
+
             except Exception as e:
                 logger.error(f"更新服务器 {server.host} 密码时出错: {str(e)}", exc_info=True)
-        
-        logger.info(f"过期密码检查完成，共更新 {updated_count} 个服务器")
+
+        # 只有在有更新操作时才输出完成日志
+        if updated_count > 0:
+            logger.info(f"过期密码检查完成，共更新 {updated_count} 个服务器")
+        elif expired_servers.exists() or auto_expired_servers.exists():
+            logger.info("过期密码检查完成，无需更新")
+
         return updated_count
-        
+
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error(f"检查过期密码时出错: {str(e)}", exc_info=True)
@@ -1491,7 +1504,7 @@ def update_server_password(server, new_password, account_name):
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         # 连接服务器
-        logger.info(f"尝试连接服务器 {server.host}:{server.port} 使用用户 {server.username}")
+        logger.debug(f"尝试连接服务器 {server.host}:{server.port}")
         ssh.connect(
             hostname=server.host,
             port=server.port,
@@ -1506,12 +1519,12 @@ def update_server_password(server, new_password, account_name):
         escaped_password = new_password.replace("'", "'\"'\"'")
         escaped_account = account_name.replace("'", "'\"'\"'")
         escaped_sudo_password = server.get_password().replace("'", "'\"'\"'")
-        
+
         # 使用sudo chpasswd命令更新密码（处理明文密码）
         # 使用-S选项从标准输入读取sudo密码，避免交互式密码提示
         command = f"printf '%s:%s\\n' '{account_name}' '{new_password}' | sudo /usr/sbin/chpasswd 2>&1"
-        logger.info(f"执行密码更新命令，目标服务器: {server.host}")
-        
+        logger.debug(f"执行密码更新命令，目标服务器: {server.host}")
+
         stdin, stdout, stderr = ssh.exec_command(
             command,
             timeout=getattr(settings, 'SSH_EXEC_TIMEOUT', 30)
@@ -1520,11 +1533,11 @@ def update_server_password(server, new_password, account_name):
         exit_status = stdout.channel.recv_exit_status()
         output = stdout.read().decode('utf-8', errors='ignore')
         error_output = stderr.read().decode('utf-8', errors='ignore')
-        
-        logger.info(f"命令执行输出: {output}")
-        logger.info(f"命令执行错误输出: {error_output}")
-        logger.info(f"命令退出状态: {exit_status}")
-        
+
+        # logger.info(f"命令执行输出: {output}")
+        # logger.info(f"命令执行错误输出: {error_output}")
+        # logger.info(f"命令退出状态: {exit_status}")
+
         ssh.close()
 
         # 检查执行结果
@@ -1534,7 +1547,7 @@ def update_server_password(server, new_password, account_name):
         else:
             logger.error(f"服务器密码更新失败, 退出状态: {exit_status}, 错误信息: {error_output}")
             return False
-            
+
     except paramiko.AuthenticationException:
         logger.error(f"SSH认证失败: 服务器 {server.host}")
         if ssh:
@@ -1550,7 +1563,7 @@ def update_server_password(server, new_password, account_name):
         if ssh:
             ssh.close()
         return False
-    
+
 # 用户资料视图
 @login_required
 def profile(request):
@@ -1740,7 +1753,7 @@ def system_token_management(request):
             current_user.otp_secret = secret
             current_user.otp_active = False  # 不自动激活，等待用户验证
             current_user.save()
-            
+
         totp = pyotp.totp.TOTP(secret, interval=30, digits=6, digest=hashlib.sha1)
         otp_uri = totp.provisioning_uri(
             name=current_user.user_name,
@@ -1777,12 +1790,12 @@ def decrypt_server_password(request, server_id):
             'status': 'error',
             'message': '权限不足'
         }, status=403)
-    
+
     try:
         # 获取请求数据
         data = json.loads(request.body)
         token_code = data.get('token_code', '').strip()
-        
+
         # 验证OTP令牌
         if not token_code:
             logger.warning(f"用户 {request.user.user_name} 尝试解密密码时未提供OTP验证码")
@@ -1790,14 +1803,14 @@ def decrypt_server_password(request, server_id):
                 'status': 'error',
                 'message': '验证码不能为空'
             }, status=400)
-        
+
         if len(token_code) != 6 or not token_code.isdigit():
             logger.warning(f"用户 {request.user.user_name} 提供了无效的OTP验证码: {token_code}")
             return JsonResponse({
                 'status': 'error',
                 'message': '验证码必须是6位数字'
             }, status=400)
-        
+
         # 查找系统中激活的管理员令牌
         admin_user = UserInfo.objects.filter(otp_secret__isnull=False, otp_active=True).first()
         if not admin_user:
@@ -1806,7 +1819,7 @@ def decrypt_server_password(request, server_id):
                 'status': 'error',
                 'message': '系统中未找到激活的管理员令牌'
             }, status=400)
-        
+
         # 验证OTP，使用配置文件中定义的窗口期
         totp = pyotp.TOTP(admin_user.otp_secret)
         if not totp.verify(token_code, valid_window=Config.OTP_VALID_WINDOW):
@@ -1815,7 +1828,7 @@ def decrypt_server_password(request, server_id):
                 'status': 'error',
                 'message': '令牌验证失败，请重试'
             }, status=401)
-        
+
         # 查找服务器
         try:
             server = ServerInfo.objects.get(id=server_id)
@@ -1825,7 +1838,7 @@ def decrypt_server_password(request, server_id):
                 'status': 'error',
                 'message': '服务器不存在'
             }, status=404)
-        
+
         # 解密并返回密码
         try:
             decrypted_password = server.get_password()
@@ -1839,12 +1852,12 @@ def decrypt_server_password(request, server_id):
                 'status': 'error',
                 'message': '密码解密失败'
             }, status=500)
-        
+
         return JsonResponse({
             'status': 'success',
             'password': decrypted_password
         })
-        
+
     except json.JSONDecodeError:
         logger.error(f"用户 {request.user.user_name} 提供了无效的JSON数据")
         return JsonResponse({
@@ -1857,7 +1870,7 @@ def decrypt_server_password(request, server_id):
             'status': 'error',
             'message': '解密失败'
         }, status=500)
-    
+
 
 @login_required
 @require_http_methods(["GET"])
@@ -1867,21 +1880,21 @@ def check_server_account_exists(request):
         # 获取查询参数
         host = request.GET.get('host')
         username = request.GET.get('username')
-        
+
         if not host or not username:
             return JsonResponse({
                 'status': 'error',
                 'message': '缺少主机地址或用户名参数'
             }, status=400)
-        
+
         # 查找服务器信息
         exists = ServerInfo.objects.filter(host=host, username=username).exists()
-        
+
         return JsonResponse({
             'status': 'success',
             'exists': exists
         })
-        
+
     except Exception as e:
         logger.error(f"检查服务器账户组合失败: {str(e)}", exc_info=True)
         return JsonResponse({
@@ -1898,13 +1911,13 @@ def check_server_password_expiration(request):
         # 获取查询参数
         host = request.GET.get('host')
         username = request.GET.get('username')
-        
+
         if not host or not username:
             return JsonResponse({
                 'status': 'error',
                 'message': '缺少主机地址或用户名参数'
             }, status=400)
-        
+
         # 查找服务器信息
         try:
             server = ServerInfo.objects.get(host=host, username=username)
@@ -1913,7 +1926,7 @@ def check_server_password_expiration(request):
                 'status': 'error',
                 'message': '未找到指定的服务器信息'
             }, status=404)
-        
+
         # 检查是否有过期时间
         if not server.password_expiration_time:
             return JsonResponse({
@@ -1923,7 +1936,7 @@ def check_server_password_expiration(request):
                     'message': '当前服务器账户没有设置密码过期时间'
                 }
             })
-        
+
         # 检查是否已过期
         now = timezone.now()
         if server.password_expiration_time <= now:
@@ -1934,7 +1947,7 @@ def check_server_password_expiration(request):
                     'message': '密码已过期'
                 }
             })
-        
+
         # 查找最近的权限申请记录，获取申请者信息
         try:
             latest_application = PermissionApplication.objects.filter(
@@ -1942,13 +1955,13 @@ def check_server_password_expiration(request):
                 account_name=username,
                 status='approved'
             ).latest('approved_at')
-            
+
             applicant_name = latest_application.applicant.user_name
             application_time = latest_application.approved_at.strftime('%Y-%m-%d %H:%M:%S')
         except PermissionApplication.DoesNotExist:
             applicant_name = '未知'
             application_time = '未知'
-        
+
         # 返回过期时间信息
         return JsonResponse({
             'status': 'success',
@@ -1962,7 +1975,7 @@ def check_server_password_expiration(request):
                 'application_time': application_time
             }
         })
-        
+
     except Exception as e:
         logger.error(f"查询服务器密码过期时间失败: {str(e)}", exc_info=True)
         return JsonResponse({
@@ -1983,13 +1996,13 @@ def bulk_delete_users(request):
     try:
         data = json.loads(request.body)
         user_ids = data.get('user_ids', [])
-        
+
         if not user_ids or not isinstance(user_ids, list):
             return JsonResponse({
                 'status': 'error',
                 'message': '未提供有效的用户ID列表'
             }, status=400)
-        
+
         # 检查是否尝试删除管理员用户或自己
         users_to_delete = UserInfo.objects.filter(id__in=user_ids)
         for user in users_to_delete:
@@ -2003,10 +2016,10 @@ def bulk_delete_users(request):
                     'status': 'error',
                     'message': '不能删除当前登录的用户'
                 }, status=400)
-        
+
         # 批量删除用户
         deleted_count, _ = users_to_delete.delete()
-        
+
         return JsonResponse({
             'status': 'success',
             'message': f'成功删除 {deleted_count} 个用户'
@@ -2106,10 +2119,10 @@ def available_servers_for_user(request):
             'username',
             'description'
         )
-        
+
         # 转换为列表并返回
         servers_list = list(servers)
-        
+
         return JsonResponse({
             'status': 'success',
             'data': servers_list
@@ -2134,15 +2147,15 @@ def bulk_apply(request):
 
     # 获取服务器数据，用于自动完成
     servers = list(ServerInfo.objects.all().values('id', 'host', 'port', 'username', 'description'))
-    
+
     # 获取时长选项
     duration_options = Config.get_duration_options()
-    
+
     context = {
         'servers': json.dumps(servers),
         'duration_options': duration_options
     }
-    
+
     return render(request, 'bulk_apply.html', context)
 
 
@@ -2164,16 +2177,16 @@ def bulk_apply_permission(request):
 
         if not applications:
             return JsonResponse({"status": "error", "message": "未提供申请信息"}, status=400)
-        
+
         if not reason:
             return JsonResponse({"status": "error", "message": "请填写申请原因"}, status=400)
 
         # 生成统一的临时密码
         unified_password = generate_random_password()
-        
+
         # 存储申请结果
         application_results = []
-        
+
         # 处理每个申请，只创建申请记录，不更新服务器密码
         for i, app in enumerate(applications):
             server_id = int(app.get("server_id"))
@@ -2226,10 +2239,10 @@ def bulk_apply_permission(request):
         admin_user = UserInfo.objects.filter(is_superuser=True, otp_secret__isnull=False, otp_active=True).first()
         otp_code = None
         if admin_user:
-            totp = pyotp.TOTP(admin_user.otp_secret, interval=30, digits=6, digest='sha1', 
+            totp = pyotp.TOTP(admin_user.otp_secret, interval=30, digits=6, digest='sha1',
                               name=admin_user.user_name, issuer='权限管理系统')
             otp_code = totp.now()
-            
+
             # 更新申请记录，标记验证码已发送
             for app_result in application_results:
                 try:
@@ -2242,11 +2255,11 @@ def bulk_apply_permission(request):
 
         # 发送钉钉通知
         title = "批量权限申请通知"
-        
+
         # 构建服务器信息列表
         server_info_list = [f"{app['username']}@{app['host']}:{app['port']}" for app in application_results]
         server_info_text = "\n".join(server_info_list)
-        
+
         content = (
             f"## 批量权限申请通知\n\n"
             f"- **申请人**: {user.user_name}\n"
@@ -2256,7 +2269,7 @@ def bulk_apply_permission(request):
             f"- **申请时间**: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
             f"- **申请服务器列表**:\n{server_info_text}\n"
             f"- **管理员OTP验证码**: {otp_code}\n"
-        
+
         )
         send_dingtalk_message(title, content)
 
@@ -2272,7 +2285,7 @@ def bulk_apply_permission(request):
     except Exception as e:
         logger.error(f"批量申请流程错误: {str(e)}", exc_info=True)
         return JsonResponse({"status": "error", "message": f"申请失败: {str(e)}"}, status=500)
-    
+
 
 @login_required
 @require_http_methods(["POST"])
@@ -2306,7 +2319,7 @@ def verify_bulk_otp(request):
 
         # 存储申请结果
         application_results = []
-        
+
         # 处理每个申请
         for i, app in enumerate(applications):
             application_id = app.get("application_id")
@@ -2315,7 +2328,7 @@ def verify_bulk_otp(request):
             host = app.get("host", "").strip()
             duration = float(app.get("duration") or 0)
             applicant_name = app.get("applicant", "").strip()
-            
+
             logger.debug(f"Processing application {i}: application_id={application_id}, server_id={server_id}, account_name='{account_name}', host='{host}'")
 
             # 找到服务器
@@ -2339,7 +2352,7 @@ def verify_bulk_otp(request):
             if update_server_password(server, unified_password, account_name):
                 # 设置密码过期时间
                 expiration_time = timezone.now() + timedelta(hours=duration)
-                
+
                 # 更新服务器记录
                 server.password_expiration_time = expiration_time
                 server.current_duration = duration
@@ -2348,7 +2361,7 @@ def verify_bulk_otp(request):
                 server.password_change_type = 'permission_apply'  # 权限申请修改
                 server.set_password(unified_password)  # 更新加密的密码字段
                 server.save()
-                
+
                 # 更新申请记录状态
                 try:
                     application = PermissionApplication.objects.get(id=application_id)
@@ -2358,7 +2371,7 @@ def verify_bulk_otp(request):
                 except PermissionApplication.DoesNotExist:
                     logger.warning(f"申请记录不存在: id={application_id}")
                     pass  # 如果找不到申请记录，继续处理其他记录
-                
+
                 # 添加到结果列表
                 application_results.append({
                     'host': server.host,
@@ -2368,7 +2381,7 @@ def verify_bulk_otp(request):
                     'expiration': expiration_time.strftime('%Y-%m-%d %H:%M:%S'),
                     'password': unified_password
                 })
-                
+
                 logger.info(f"用户 {user.user_name} 的批量申请成功更新服务器 {server.host} 的密码")
             else:
                 logger.error(f"用户 {user.user_name} 的批量申请更新服务器 {server.host} 密码失败")
@@ -2385,7 +2398,7 @@ def verify_bulk_otp(request):
     except Exception as e:
         logger.error(f"批量申请OTP验证失败: {str(e)}", exc_info=True)
         return JsonResponse({"status": "error", "message": f"验证失败: {str(e)}"}, status=500)
-    
+
     """检查服务器密码过期的后台任务"""
     try:
         logger.info("开始检查服务器密码过期情况")
@@ -2395,13 +2408,13 @@ def verify_bulk_otp(request):
         ).exclude(
             password_expiration_time__isnull=True
         )
-        
+
         updated_count = 0
         for server in expired_servers:
             try:
                 # 为每个过期的服务器生成独立的随机密码
                 new_password = generate_random_password()
-                
+
                 # 更新服务器密码
                 if update_server_password(server, new_password, server.username):
                     # 清除过期时间和其他相关字段
@@ -2412,18 +2425,18 @@ def verify_bulk_otp(request):
                     server.password_change_type = 'auto_expired'  # 自动过期修改
                     server.set_password(new_password)  # 更新加密的密码字段
                     server.save()
-                    
+
                     updated_count += 1
                     logger.info(f"服务器 {server.host} 的密码已过期并更新成功")
                 else:
                     logger.error(f"服务器 {server.host} 密码更新失败")
-                    
+
             except Exception as e:
                 logger.error(f"更新服务器 {server.host} 密码时出错: {str(e)}", exc_info=True)
-        
+
         logger.info(f"过期密码检查完成，共更新 {updated_count} 个服务器")
         return updated_count
-        
+
     except Exception as e:
         logger.error(f"检查过期密码时出错: {str(e)}", exc_info=True)
         return 0

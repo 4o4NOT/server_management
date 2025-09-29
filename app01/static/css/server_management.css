@@ -525,3 +525,33 @@ body {
     font-weight: 500;
     color: #667eea;
 }
+
+.password-cell {
+    position: relative;
+    padding-right: 30px !important;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none !important;
+    background: transparent !important;
+    transition: none !important;
+    box-shadow: none !important;
+}
+
+.toggle-password:hover {
+    transform: translateY(-50%);
+}
+
+.toggle-password i {
+    font-size: 0.8rem;
+}

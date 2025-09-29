@@ -17,17 +17,16 @@ const passwordMap = new Map();
 // 添加密码显示/隐藏功能
 function togglePasswordVisibility(event) {
     const button = event.currentTarget;
-    const index = button.getAttribute('data-index');
     const serverId = button.getAttribute('data-server-id');
     const isVisible = button.getAttribute('data-visible') === 'true';
     const passwordCell = button.closest('.password-cell');
-    const passwordText = passwordCell.querySelector('.password-text');
+    const passwordText = passwordCell.querySelector('span');
 
     if (isVisible) {
         // 隐藏密码
         passwordText.textContent = '••••••••';
         button.setAttribute('data-visible', 'false');
-        button.innerHTML = '<i class="fas fa-eye"></i>';
+        button.innerHTML = '<i class="fas fa-eye" style="font-size: 0.8rem;"></i>';
     } else {
         // 显示密码需要OTP验证
         showPasswordOTPModal(serverId, passwordText, button);
@@ -138,19 +137,19 @@ function showPasswordOTPModal(serverId, passwordTextElement, toggleButton) {
                     // 显示密码
                     passwordTextElement.textContent = data.password;
                     toggleButton.setAttribute('data-visible', 'true');
-                    toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                    toggleButton.innerHTML = '<i class="fas fa-eye-slash" style="font-size: 0.8rem;"></i>';
 
                     // 关闭模态框
                     setTimeout(closeModal, 100); // 稍微延迟关闭，确保DOM操作完成
 
-                    // 30秒后自动隐藏密码
+                    // 5秒后自动隐藏密码（根据需求调整时间）
                     setTimeout(() => {
                         if (toggleButton.getAttribute('data-visible') === 'true') {
                             passwordTextElement.textContent = '••••••••';
                             toggleButton.setAttribute('data-visible', 'false');
-                            toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
+                            toggleButton.innerHTML = '<i class="fas fa-eye" style="font-size: 0.8rem;"></i>';
                         }
-                    }, 30000);
+                    }, 5000); // 5秒后自动隐藏
                 } else {
                     alert(`验证失败: ${data.message}`);
                 }
@@ -193,7 +192,7 @@ function editServer(event) {
     const row = event.currentTarget.closest('tr');
     const cells = row.querySelectorAll('td');
 
-    // 获取服务器信息
+    // 更准确地获取服务器信息，考虑使用data属性或更明确的选择器
     const host = cells[0].textContent;
     const port = cells[1].textContent;
     const username = cells[2].textContent;
@@ -428,6 +427,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof serverManagement !== 'undefined' && serverManagement) {
         serverManagement.loadServers();
     }
+
+    // 绑定服务器操作事件
+    bindServerActions();
 });
 
 
@@ -715,21 +717,30 @@ class ServerManagement {
         document.getElementById('noServersMessage')?.classList.add('d-none');
 
         tbody.innerHTML = this.serversData.map(server => `            <tr>
-                <td>${server.host}</td>
-                <td>${server.port}</td>
-                <td>${server.username}</td>
-                <td>******</td>
-                <td>${server.description || ''}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="serverManagement.editServer(${server.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="serverManagement.deleteServer(${server.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        <td>${server.host}</td>
+        <td>${server.port}</td>
+        <td>${server.username}</td>
+        <td class="password-cell" style="position: relative;">
+            <span style="margin-right: 25px;">••••••••</span>
+            <button class="btn btn-sm btn-outline-secondary toggle-password" 
+                    data-server-id="${server.id}" 
+                    data-visible="false"
+                    style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: transparent;">
+                <i class="fas fa-eye" style="font-size: 0.8rem;"></i>
+            </button>
+        </td>
+        <td>${server.description || ''}</td>
+        <td>
+            <button class="btn btn-sm btn-outline-primary me-1 edit-server" data-id="${server.id}" onclick="serverManagement.editServer(${server.id})">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger delete-server" data-id="${server.id}" onclick="serverManagement.deleteServer(${server.id})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    </tr>`).join('');
+        // 绑定服务器操作事件
+        setTimeout(bindServerActions, 0)
     }
 
     // 渲染分页控件
@@ -798,14 +809,104 @@ class ServerManagement {
 
     // 编辑服务器
     editServer(serverId) {
-        // 实现编辑服务器逻辑
-        console.log('Edit server:', serverId);
+        // 查找对应的服务器数据
+        const server = this.serversData.find(s => s.id === serverId);
+        if (!server) {
+            console.error('未找到服务器:', serverId);
+            return;
+        }
+
+        // 填充表单
+        document.getElementById('host').value = server.host;
+        document.getElementById('port').value = server.port;
+        document.getElementById('username').value = server.username;
+        document.getElementById('description').value = server.description || '';
+
+        // 设置隐藏字段表示编辑模式
+        const form = document.getElementById('serverForm');
+        form.dataset.editMode = 'true';
+        form.dataset.serverId = serverId;
+
+        // 更改UI以显示编辑模式
+        document.getElementById('formTitle').style.display = 'none';
+        document.getElementById('editTitle').style.display = 'inline';
+        document.getElementById('submitText').style.display = 'none';
+        document.getElementById('updateText').style.display = 'inline';
+        document.getElementById('editingIndicator').style.display = 'flex';
+        document.getElementById('cancelEdit').style.display = 'block';
+        document.getElementById('serverFormCard').classList.add('edit-mode');
+
+        // 显示正在编辑的服务器信息
+        const editingServerInfo = document.getElementById('editingServerInfo');
+        editingServerInfo.textContent = `正在编辑: ${server.username}@${server.host}:${server.port}`;
+        editingServerInfo.style.display = 'block';
+
+        // 添加动画效果以吸引用户注意
+        const formCard = document.getElementById('serverFormCard');
+        formCard.classList.remove('highlight-edit');
+        void formCard.offsetWidth; // 触发重排
+        formCard.classList.add('highlight-edit');
+
+        // 滚动到表单区域
+        setTimeout(() => {
+            formCard.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }, 100);
     }
 
     // 删除服务器
     deleteServer(serverId) {
-        // 实现删除服务器逻辑
-        console.log('Delete server:', serverId);
+        if (confirm('确定要删除这个服务器吗？')) {
+            // 显示加载状态
+            const deleteButtons = document.querySelectorAll(`.delete-server[data-id="${serverId}"]`);
+            const button = deleteButtons.length > 0 ? deleteButtons[0] : null;
+
+            let originalHTML = '';
+            if (button) {
+                originalHTML = button.innerHTML;
+                button.innerHTML = '<span class="loading"></span>';
+                button.disabled = true;
+            }
+
+            fetch(`/api/delete_server/${serverId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误! 状态: ${response.status}`);
+                    }
+                    return response.json().catch(() => {
+                        return {
+                            status: 'error',
+                            message: '服务器返回了无效的响应格式'
+                        };
+                    });
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('服务器删除成功');
+                        // 重新加载服务器列表
+                        this.loadServers();
+                    } else {
+                        throw new Error(data.message || '删除失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('删除服务器失败:', error);
+                    alert('删除失败: ' + error.message);
+                })
+                .finally(() => {
+                    // 恢复按钮状态
+                    if (button) {
+                        button.innerHTML = originalHTML;
+                        button.disabled = false;
+                    }
+                });
+        }
     }
 }
 
