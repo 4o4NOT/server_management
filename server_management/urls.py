@@ -62,7 +62,7 @@ urlpatterns = [
 
     # 批量删除用户API
     path('bulk_delete_users/', views.bulk_delete_users, name='bulk_delete_users'),
-
+    path('api/batch-passwords/', views.get_batch_server_passwords, name='get_batch_server_passwords'),
 
     
     # 重定向到首页

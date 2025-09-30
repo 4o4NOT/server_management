@@ -2399,44 +2399,84 @@ def verify_bulk_otp(request):
         logger.error(f"批量申请OTP验证失败: {str(e)}", exc_info=True)
         return JsonResponse({"status": "error", "message": f"验证失败: {str(e)}"}, status=500)
 
-    """检查服务器密码过期的后台任务"""
+@login_required
+@require_http_methods(["POST"])
+def get_batch_server_passwords(request):
+    """批量获取服务器密码API（仅限管理员）"""
+    if not request.user.is_superuser:
+        return JsonResponse({
+            'status': 'error',
+            'message': '权限不足'
+        }, status=403, json_dumps_params={'ensure_ascii': False})
+
     try:
-        logger.info("开始检查服务器密码过期情况")
-        now = timezone.now()
-        expired_servers = ServerInfo.objects.filter(
-            password_expiration_time__lte=now
-        ).exclude(
-            password_expiration_time__isnull=True
-        )
+        data = json.loads(request.body)
+        server_hosts = data.get('hosts', [])
+        # 获取用户名，如果未提供则默认为'root'
+        username = data.get('username', 'root')
 
-        updated_count = 0
-        for server in expired_servers:
+        if not server_hosts:
+            return JsonResponse({
+                'status': 'error',
+                'message': '未提供主机列表'
+            }, status=400, json_dumps_params={'ensure_ascii': False})
+
+        # 验证OTP令牌
+        # token_code = data.get('token_code', '').strip()
+        # if not token_code or len(token_code) != 6 or not token_code.isdigit():
+        #     return JsonResponse({
+        #         'status': 'error',
+        #         'message': '验证码必须是6位数字'
+        #     }, status=400, json_dumps_params={'ensure_ascii': False})
+        #
+        # # 查找管理员令牌
+        # admin_user = UserInfo.objects.filter(otp_secret__isnull=False, otp_active=True).first()
+        # if not admin_user:
+        #     return JsonResponse({
+        #         'status': 'error',
+        #         'message': '未找到已激活的管理员令牌'
+        #     }, status=400, json_dumps_params={'ensure_ascii': False})
+        #
+        # # 验证OTP
+        # totp = pyotp.TOTP(admin_user.otp_secret)
+        # if not totp.verify(token_code, valid_window=Config.OTP_VALID_WINDOW):
+        #     return JsonResponse({
+        #         'status': 'error',
+        #         'message': '令牌验证失败'
+        #     }, status=401, json_dumps_params={'ensure_ascii': False})
+
+        # 获取服务器密码
+        server_passwords = []
+        for host in server_hosts:
             try:
-                # 为每个过期的服务器生成独立的随机密码
-                new_password = generate_random_password()
+                # 使用指定的用户名而不是固定为'root'
+                server = ServerInfo.objects.get(host=host, username=username)
+                decrypted_password = server.get_password()
+                server_passwords.append({
+                    'host': server.host,
+                    'port': server.port,
+                    'username': server.username,
+                    'password': decrypted_password
+                })
+            except ServerInfo.DoesNotExist:
+                server_passwords.append({
+                    'host': host,
+                    'error': '服务器不存在'
+                })
 
-                # 更新服务器密码
-                if update_server_password(server, new_password, server.username):
-                    # 清除过期时间和其他相关字段
-                    server.password_expiration_time = None
-                    server.current_duration = 0
-                    server.generated_password = None
-                    server.last_password_change = now
-                    server.password_change_type = 'auto_expired'  # 自动过期修改
-                    server.set_password(new_password)  # 更新加密的密码字段
-                    server.save()
+        return JsonResponse({
+            'status': 'success',
+            'servers': server_passwords
+        }, json_dumps_params={'ensure_ascii': False})
 
-                    updated_count += 1
-                    logger.info(f"服务器 {server.host} 的密码已过期并更新成功")
-                else:
-                    logger.error(f"服务器 {server.host} 密码更新失败")
-
-            except Exception as e:
-                logger.error(f"更新服务器 {server.host} 密码时出错: {str(e)}", exc_info=True)
-
-        logger.info(f"过期密码检查完成，共更新 {updated_count} 个服务器")
-        return updated_count
-
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': '请求数据格式错误'
+        }, status=400, json_dumps_params={'ensure_ascii': False})
     except Exception as e:
-        logger.error(f"检查过期密码时出错: {str(e)}", exc_info=True)
-        return 0
+        logger.error(f"批量获取服务器密码失败: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'status': 'error',
+            'message': f'获取密码失败: {str(e)}'
+        }, status=500, json_dumps_params={'ensure_ascii': False})

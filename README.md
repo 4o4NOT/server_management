@@ -248,7 +248,26 @@ password_display_mode = auto_copy
 + `POST /bulk_apply_permission/` - 批量申请服务器权限
 + `POST /verify_otp/` - 验证OTP并获取密码
 + `POST /verify_bulk_otp/` - 验证批量申请OTP
+### 批量获取密码(供运维脚本使用)
++ `POST /api/batch-passwords/` - 申请服务器权限
+```plain
+bash
+# 登录获取cookie
+curl -X POST http://localhost:8000/login/ \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=用户名" \
+  -d "password=密码" \
+  -c cookies.txt
 
+# 批量获取用户密码
+curl -X POST http://localhost:8000/api/batch-passwords/ \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{
+    "hosts": ["10.199.0.52", "10.199.0.53"],
+    "usernam": "test"
+  }'
+```
 ## 维护管理
 
 ### 日志查看
