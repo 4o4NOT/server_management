@@ -1122,12 +1122,25 @@ def apply_permission(request):
         account_name = data.get("account_name", "").strip()
         duration = float(data.get("duration", 0))  # 改为float以支持小数
         reason = data.get("reason", "").strip()
+        operation_type = data.get("operation_type", "view")  # 默认为查看
+        maintenance_ticket = data.get("maintenance_ticket", "").strip()
 
         if not account_name or duration <= 0:
             return JsonResponse({"status": "error", "message": "账户名或时长无效"}, status=400)
 
         if not reason:
             return JsonResponse({"status": "error", "message": "请填写申请原因"}, status=400)
+
+        # 验证操作类型
+        if operation_type not in ['view', 'modify']:
+            return JsonResponse({"status": "error", "message": "无效的操作类型"}, status=400)
+
+        # 如果是修改操作，验证运维单号
+        if operation_type == 'modify':
+            if not maintenance_ticket:
+                return JsonResponse({"status": "error", "message": "修改操作必须提供运维单号"}, status=400)
+            if not re.match(r'^\d+$', maintenance_ticket):
+                return JsonResponse({"status": "error", "message": "运维单号只能包含数字"}, status=400)
 
         # 找到服务器
         try:
@@ -1146,7 +1159,9 @@ def apply_permission(request):
             account_name=account_name,
             reason=reason,
             duration=duration,
-            status='verification_pending'  # 等待验证
+            status='verification_pending',  # 等待验证
+            operation_type=operation_type,  # 添加操作类型
+            maintenance_ticket=maintenance_ticket if operation_type == 'modify' else None  # 添加运维单号
         )
 
         # 找已激活的管理员令牌
@@ -1174,14 +1189,19 @@ def apply_permission(request):
             f"- **服务器**: {server.host}:{server.port}\n"
             f"- **账户名**: {account_name}\n"
             f"- **申请时长**: {duration}小时\n"
+            f"- **操作类型**: {'修改' if operation_type == 'modify' else '查看'}\n"
+        )
+        # 如果是修改操作，添加运维单号
+        if operation_type == 'modify':
+            content += f"- **运维单号**: {maintenance_ticket}\n"
+        content += (
             f"- **申请原因**: {reason}\n"
             f"- **申请时间**: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
             f"- **管理员OTP验证码**: {otp_code}\n"
         )
         send_dingtalk_message(title, content)
 
-        logger.info(f"权限申请已提交: 用户={user.user_name}, 服务器={server.host}, 时长={duration}小时")
-
+        logger.info(f"权限申请已提交: 用户={user.user_name}, 服务器={server.host}, 时长={duration}小时, 类型={operation_type}")
         return JsonResponse({
             "status": "notify_sent",
             "message": "已发送钉钉通知，请输入管理员OTP验证码",
@@ -2171,6 +2191,8 @@ def bulk_apply_permission(request):
         applications = data.get("applications", [])
         reason = data.get("reason", "").strip()
         duration = float(data.get("duration", 0))  # 改为float以支持小数
+        operation_type = data.get("operation_type", "view")  # 默认为查看
+        maintenance_ticket = data.get("maintenance_ticket", "").strip()
 
         logger.debug(f"Bulk apply data - applications: {applications}, reason: '{reason}', duration: {duration}")
         logger.debug(f"Applications count: {len(applications)}")
@@ -2180,6 +2202,17 @@ def bulk_apply_permission(request):
 
         if not reason:
             return JsonResponse({"status": "error", "message": "请填写申请原因"}, status=400)
+
+        # 验证操作类型
+        if operation_type not in ['view', 'modify']:
+            return JsonResponse({"status": "error", "message": "无效的操作类型"}, status=400)
+
+        # 如果是修改操作，验证运维单号
+        if operation_type == 'modify':
+            if not maintenance_ticket:
+                return JsonResponse({"status": "error", "message": "修改操作必须提供运维单号"}, status=400)
+            if not re.match(r'^\d+$', maintenance_ticket):
+                return JsonResponse({"status": "error", "message": "运维单号只能包含数字"}, status=400)
 
         # 生成统一的临时密码
         unified_password = generate_random_password()
@@ -2220,7 +2253,9 @@ def bulk_apply_permission(request):
                 account_name=account_name,
                 reason=reason,
                 duration=duration,
-                status='verification_pending'  # 等待验证
+                status='verification_pending',  # 等待验证
+                operation_type = operation_type,  # 添加操作类型
+                maintenance_ticket = maintenance_ticket if operation_type == 'modify' else None  # 添加运维单号
             )
 
             # 添加到结果列表
@@ -2232,7 +2267,9 @@ def bulk_apply_permission(request):
                 'username': account_name,  # 这就是account_name
                 'account_name': account_name,  # 添加account_name字段确保兼容性
                 'applicant': user.user_name,
-                'duration': duration
+                'duration': duration,
+                'operation_type': operation_type,  # 添加操作类型
+                'maintenance_ticket': maintenance_ticket if operation_type == 'modify' else None  # 添加运维单号
             })
 
         # 查找已激活的管理员令牌用于生成OTP验证码
@@ -2265,16 +2302,22 @@ def bulk_apply_permission(request):
             f"- **申请人**: {user.user_name}\n"
             f"- **申请数量**: {len(applications)}\n"
             f"- **申请时长**: {duration}小时\n"
+            f"- **操作类型**: {'修改' if operation_type == 'modify' else '查看'}\n"
+        )
+
+        # 如果是修改操作，添加运维单号
+        if operation_type == 'modify':
+            content += f"- **运维单号**: {maintenance_ticket}\n"
+
+        content += (
             f"- **申请原因**: {reason}\n"
             f"- **申请时间**: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
             f"- **申请服务器列表**:\n{server_info_text}\n"
             f"- **管理员OTP验证码**: {otp_code}\n"
-
         )
         send_dingtalk_message(title, content)
 
         logger.info(f"用户 {user.user_name} 的批量申请已提交，等待管理员验证，共处理 {len(applications)} 个申请")
-
         return JsonResponse({
             "status": "notify_sent",
             "message": "已发送钉钉通知，请输入管理员OTP验证码",

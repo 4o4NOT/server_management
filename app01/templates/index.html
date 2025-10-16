@@ -174,9 +174,38 @@
                         <div class="col-sm-9">
                             <select class="form-select" id="duration">
                                 {% for hours, display_name in duration_options %}
-                                <option value="{{ hours }}"{% if hours == 0.5 %} selected{% endif %}>{{ display_name }}</option>
+                                    <option value="{{ hours }}"{% if hours == 0.5 %} selected{% endif %}>{{ display_name }}</option>
                                 {% endfor %}
                             </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label class="col-sm-3 col-form-label text-sm-end"><i class="fas fa-cog me-1"></i>操作类型</label>
+                        <div class="col-sm-9">
+                            <select class="form-select" id="operationType" required>
+                                <option value="view">查看</option>
+                                <option value="modify">修改</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 添加运维单号输入框（默认隐藏） -->
+                    <div class="mb-3 row" id="maintenanceTicketRow" style="display: none;">
+                        <label class="col-sm-3 col-form-label text-sm-end"><i class="fas fa-ticket-alt me-1"></i>运维单号</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="maintenanceTicket" placeholder="请输入一站式运维单号">
+
+                        </div>
+                    </div>
+
+                    <!-- 在申请原因行之前添加说明 -->
+                    <div class="mb-3 row" id="operationTypeInfo" style="display: none;">
+                        <div class="col-sm-9 offset-sm-3">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-1"></i>
+                                选择"修改"类型需要提供一站式运维单号
+                            </div>
                         </div>
                     </div>
                     <div class="mb-4 row">

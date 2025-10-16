@@ -256,6 +256,29 @@ class PermissionApplication(models.Model):
         verbose_name='申请时间',
         default=timezone.now
     )
+
+    # 新增操作类型字段
+    OPERATION_TYPES = [
+        ('view', '查看'),
+        ('modify', '修改'),
+    ]
+    operation_type = models.CharField(
+        verbose_name='操作类型',
+        max_length=10,
+        choices=OPERATION_TYPES,
+        default='view',
+        help_text='申请的操作类型：查看或修改'
+    )
+
+    # 新增运维单号字段（仅在修改类型时必填）
+    maintenance_ticket = models.CharField(
+        verbose_name='运维单号',
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text='修改操作时的一站式运维单号'
+    )
+
     approved_at = models.DateTimeField(
         verbose_name='批准时间',
         null=True,

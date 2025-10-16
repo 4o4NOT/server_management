@@ -233,7 +233,32 @@
                         </select>
                     </div>
                 </div>
+                <div class="mb-3 row align-items-center">
+                    <label class="col-sm-2 col-form-label text-sm-end"><i class="fas fa-cog me-1"></i>操作类型</label>
+                    <div class="col-sm-10">
+                        <select class="form-select" id="operationType" required>
+                            <option value="view">查看</option>
+                            <option value="modify">修改</option>
+                        </select>
+                    </div>
+                </div>
 
+                <!-- 添加运维单号输入框（默认隐藏） -->
+                <div class="mb-3 row align-items-center" id="maintenanceTicketRow" style="display: none;">
+                    <label class="col-sm-2 col-form-label text-sm-end"><i class="fas fa-ticket-alt me-1"></i>运维单号</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="maintenanceTicket" placeholder="请输入一站式运维单号（仅数字）">
+                        <div class="form-text">请输入一站式运维单号，只能包含数字</div>
+                    </div>
+                </div>
+                <div class="mb-3 row" id="operationTypeInfo" style="display: none;">
+                    <div class="col-sm-10 offset-sm-2">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-1"></i>
+                            选择"修改"类型需要提供一站式运维单号
+                        </div>
+                    </div>
+                </div>
                 <!-- 申请原因 -->
                 <div class="mb-4 row">
                     <label class="col-sm-2 col-form-label text-sm-end"><i
@@ -358,6 +383,37 @@
                 updateAllAccountSelects();
             }
         });
+
+        // 添加操作类型切换处理
+        const operationTypeSelect = document.getElementById('operationType');
+        const maintenanceTicketRow = document.getElementById('maintenanceTicketRow');
+        const maintenanceTicketInput = document.getElementById('maintenanceTicket');
+        const operationTypeInfo = document.getElementById('operationTypeInfo');
+
+        if (operationTypeSelect && maintenanceTicketRow && maintenanceTicketInput) {
+            // 监听操作类型变化
+            operationTypeSelect.addEventListener('change', function() {
+                if (this.value === 'modify') {
+                    maintenanceTicketRow.style.display = 'flex';
+                    if (operationTypeInfo) {
+                        operationTypeInfo.style.display = 'block';
+                    }
+                    maintenanceTicketInput.required = true;
+                } else {
+                    maintenanceTicketRow.style.display = 'none';
+                    if (operationTypeInfo) {
+                        operationTypeInfo.style.display = 'none';
+                    }
+                    maintenanceTicketInput.required = false;
+                    maintenanceTicketInput.value = '';
+                }
+            });
+
+            // 验证运维单号只能输入数字
+            maintenanceTicketInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
     });
 
     // 更新已选择主机列表
@@ -609,12 +665,25 @@
         const reason = document.getElementById('reason').value.trim();
         const duration = document.getElementById('duration').value;
         const applicant = document.getElementById('applicant').value.trim();
+        // 添加操作类型和运维单号字段
+        const operationType = document.getElementById('operationType').value;
+        const maintenanceTicket = document.getElementById('maintenanceTicket').value.trim();
 
         if (!reason) {
             alert('请填写申请原因');
             return;
         }
-
+        // 如果是修改操作，验证运维单号
+        if (operationType === 'modify') {
+            if (!maintenanceTicket) {
+                alert('修改操作必须填写运维单号');
+                return;
+            }
+            if (!/^\d+$/.test(maintenanceTicket)) {
+                alert('运维单号只能包含数字');
+                return;
+            }
+        }
         // 收集所有行的数据
         const rows = document.querySelectorAll('.apply-row');
         const applications = [];
@@ -684,7 +753,9 @@
                 applications: applications,
                 reason: reason,
                 duration: parseFloat(duration) || 0,  // 确保是浮点数，添加默认值
-                applicant: applicant
+                applicant: applicant,
+                operation_type: operationType,  // 添加操作类型
+                maintenance_ticket: operationType === 'modify' ? maintenanceTicket : null  // 添加运维单号
             })
         })
             .then(response => response.json())
@@ -796,7 +867,9 @@
                 body: JSON.stringify({
                     token_code: otpCode,
                     applications: applications,
-                    password: data.password
+                    password: data.password,
+                    operation_type: document.getElementById('operationType').value,  // 添加操作类型
+                    maintenance_ticket: document.getElementById('maintenanceTicket').value  // 添加运维单
                 })
             })
                 .then(response => response.json())

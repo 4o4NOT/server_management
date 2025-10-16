@@ -267,6 +267,37 @@ document.addEventListener('DOMContentLoaded', function () {
         selectElement.innerHTML = '<option value="">请选择账号</option>';
     }
 
+    // 添加操作类型切换处理
+    const operationTypeSelect = document.getElementById('operationType');
+    const maintenanceTicketRow = document.getElementById('maintenanceTicketRow');
+    const maintenanceTicketInput = document.getElementById('maintenanceTicket');
+    const operationTypeInfo = document.getElementById('operationTypeInfo');
+
+    if (operationTypeSelect && maintenanceTicketRow && maintenanceTicketInput) {
+        // 监听操作类型变化
+        operationTypeSelect.addEventListener('change', function() {
+            if (this.value === 'modify') {
+                maintenanceTicketRow.style.display = 'flex';
+                if (operationTypeInfo) {
+                    operationTypeInfo.style.display = 'block';
+                }
+                maintenanceTicketInput.required = true;
+            } else {
+                maintenanceTicketRow.style.display = 'none';
+                if (operationTypeInfo) {
+                    operationTypeInfo.style.display = 'none';
+                }
+                maintenanceTicketInput.required = false;
+                maintenanceTicketInput.value = '';
+            }
+        });
+
+        // 验证运维单号只能输入数字
+        maintenanceTicketInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    }
+
     // 从API获取可申请的服务器列表
     function fetchAvailableServers() {
         fetch('/api/available_servers/')
@@ -904,12 +935,28 @@ document.addEventListener('DOMContentLoaded', function () {
         const accountName = document.getElementById('accountName').value.trim();
         const duration = parseFloat(document.getElementById('duration').value);
         const reason = document.getElementById('reason').value.trim();
+        // 添加操作类型和运维单号字段
+        const operationType = document.getElementById('operationType').value;
+        const maintenanceTicket = document.getElementById('maintenanceTicket').value.trim();
+
 
         console.log("表单数据:", { targetHost, accountName, duration, reason });
 
         if (!targetHost || !accountName || !duration || !reason) {
             alert('请填写所有必填字段');
             return;
+        }
+
+        // 如果是修改操作，验证运维单号
+        if (operationType === 'modify') {
+            if (!maintenanceTicket) {
+                alert('修改操作必须填写运维单号');
+                return;
+            }
+            if (!/^\d+$/.test(maintenanceTicket)) {
+                alert('运维单号只能包含数字');
+                return;
+            }
         }
 
         // 获取选中的服务器ID
@@ -934,8 +981,10 @@ document.addEventListener('DOMContentLoaded', function () {
             applyData = {
                 server_id: parseInt(serverId),
                 account_name: accountName,
-                duration: duration
-            };
+                duration: duration,
+                operation_type: operationType,
+                maintenance_ticket: operationType === 'modify' ? maintenanceTicket : null
+        };
 
             console.log("准备发送申请数据:", applyData);
 
@@ -950,7 +999,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     server_id: parseInt(serverId),
                     account_name: accountName,
                     duration: duration,
-                    reason: reason
+                    reason: reason,
+                    operation_type: operationType,
+                    maintenance_ticket: operationType === 'modify' ? maintenanceTicket : null
                 })
             });
 
@@ -995,7 +1046,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 token_code: totpCode,
                 server_id: applyData ? applyData.server_id : null,
                 account_name: applyData ? applyData.account_name : null,
-                duration: applyData ? applyData.duration : null
+                duration: applyData ? applyData.duration : null,
+                operation_type: applyData ? applyData.operation_type : 'view',
+                maintenance_ticket: applyData ? applyData.maintenance_ticket : null
             };
 
             // 如果有申请ID，则添加到请求数据中
@@ -1032,7 +1085,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     saveCountdownInfo(serverInfo);
 
                     // 弹窗提示并复制密码
-                    const message = `申请成功！\n服务器: ${serverInfo.host}\n用户名: ${serverInfo.username}\n有效期至: ${serverInfo.expiration}`;
+                    let message = `申请成功！\n服务器: ${serverInfo.host}\n用户名: ${serverInfo.username}\n有效期至: ${serverInfo.expiration}`;
+                    if (result.operation_type === 'modify') {
+                        message += `\n操作类型: 修改\n运维单号: ${result.maintenance_ticket}`;
+                    } else {
+                        message += `\n操作类型: 查看`;
+                    }
                     if (confirm(message + '\n\n点击确定复制密码到剪贴板')) {
                         copyTextToClipboard(serverInfo.password);
                     }
