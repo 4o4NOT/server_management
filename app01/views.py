@@ -2465,28 +2465,28 @@ def get_batch_server_passwords(request):
             }, status=400, json_dumps_params={'ensure_ascii': False})
 
         # 验证OTP令牌
-        # token_code = data.get('token_code', '').strip()
-        # if not token_code or len(token_code) != 6 or not token_code.isdigit():
-        #     return JsonResponse({
-        #         'status': 'error',
-        #         'message': '验证码必须是6位数字'
-        #     }, status=400, json_dumps_params={'ensure_ascii': False})
-        #
-        # # 查找管理员令牌
-        # admin_user = UserInfo.objects.filter(otp_secret__isnull=False, otp_active=True).first()
-        # if not admin_user:
-        #     return JsonResponse({
-        #         'status': 'error',
-        #         'message': '未找到已激活的管理员令牌'
-        #     }, status=400, json_dumps_params={'ensure_ascii': False})
-        #
-        # # 验证OTP
-        # totp = pyotp.TOTP(admin_user.otp_secret)
-        # if not totp.verify(token_code, valid_window=Config.OTP_VALID_WINDOW):
-        #     return JsonResponse({
-        #         'status': 'error',
-        #         'message': '令牌验证失败'
-        #     }, status=401, json_dumps_params={'ensure_ascii': False})
+        token_code = data.get('token_code', '').strip()
+        if not token_code or len(token_code) != 6 or not token_code.isdigit():
+            return JsonResponse({
+                'status': 'error',
+                'message': '验证码必须是6位数字'
+            }, status=400, json_dumps_params={'ensure_ascii': False})
+
+        # 查找管理员令牌
+        admin_user = UserInfo.objects.filter(otp_secret__isnull=False, otp_active=True).first()
+        if not admin_user:
+            return JsonResponse({
+                'status': 'error',
+                'message': '未找到已激活的管理员令牌'
+            }, status=400, json_dumps_params={'ensure_ascii': False})
+
+         # 验证OTP
+        totp = pyotp.TOTP(admin_user.otp_secret)
+        if not totp.verify(token_code, valid_window=Config.OTP_VALID_WINDOW):
+            return JsonResponse({
+                'status': 'error',
+                'message': '令牌验证失败'
+            }, status=401, json_dumps_params={'ensure_ascii': False})
 
         # 获取服务器密码
         server_passwords = []
