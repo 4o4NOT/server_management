@@ -89,7 +89,7 @@ body {
 }
 
 .card:hover {
-    transform: translateY(-5px);
+    /*transform: translateY(-5px);*/
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
@@ -140,7 +140,7 @@ body {
 }
 
 .btn:hover {
-    transform: translateY(-2px);
+    /*transform: translateY(-2px);*/
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
@@ -266,7 +266,7 @@ code {
 .user-actions .btn:hover {
     background: white;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    /*transform: translateY(-2px);*/
     border-color: #667eea !important;
 }
 
@@ -287,7 +287,7 @@ code {
 }
 
 .feature-card:hover {
-    transform: translateY(-10px);
+    /*transform: translateY(-10px);*/
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
 
@@ -526,7 +526,7 @@ code {
 
 /* 添加一些额外的视觉效果 */
 .countdown-card:hover {
-    transform: translateY(-5px);
+    /*transform: translateY(-5px);*/
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
 }
 
