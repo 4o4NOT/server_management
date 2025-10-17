@@ -2415,6 +2415,10 @@ def verify_bulk_otp(request):
                     application = PermissionApplication.objects.get(id=application_id)
                     application.status = 'approved'
                     application.approved_at = timezone.now()
+                    if not application.batch_hosts:
+                        # 获取所有相关的申请记录的主机列表
+                        all_hosts = [app.get("host", "") for app in applications]
+                        application.batch_hosts = json.dumps(all_hosts, ensure_ascii=False)
                     application.save()
                 except PermissionApplication.DoesNotExist:
                     logger.warning(f"申请记录不存在: id={application_id}")
@@ -2447,6 +2451,7 @@ def verify_bulk_otp(request):
         logger.error(f"批量申请OTP验证失败: {str(e)}", exc_info=True)
         return JsonResponse({"status": "error", "message": f"验证失败: {str(e)}"}, status=500)
 
+
 @login_required
 @require_http_methods(["POST"])
 def get_batch_server_passwords(request):
@@ -2462,11 +2467,20 @@ def get_batch_server_passwords(request):
         server_hosts = data.get('hosts', [])
         # 获取用户名，如果未提供则默认为'root'
         username = data.get('username', 'root')
+        # 获取使用原因
+        reason = data.get('reason', '').strip()
 
         if not server_hosts:
             return JsonResponse({
                 'status': 'error',
                 'message': '未提供主机列表'
+            }, status=400, json_dumps_params={'ensure_ascii': False})
+
+        # 验证使用原因
+        if not reason:
+            return JsonResponse({
+                'status': 'error',
+                'message': '请填写使用原因'
             }, status=400, json_dumps_params={'ensure_ascii': False})
 
         # 验证OTP令牌
@@ -2493,6 +2507,41 @@ def get_batch_server_passwords(request):
                 'message': '令牌验证失败'
             }, status=401, json_dumps_params={'ensure_ascii': False})
 
+        # 将主机列表转换为JSON字符串存储
+        batch_hosts_json = json.dumps(server_hosts, ensure_ascii=False)
+
+        # 为每个主机创建单独的申请记录（保持向后兼容）
+        individual_applications = []
+        for host in server_hosts:
+            try:
+                server = ServerInfo.objects.get(host=host, username=username)
+                # 为每个服务器创建申请记录，同时存储完整的主机列表
+                application = PermissionApplication.objects.create(
+                    applicant=request.user,
+                    server=server,
+                    account_name=username,
+                    reason=reason,
+                    duration=0,
+                    status='approved',
+                    operation_type='batch_view',
+                    approved_at=timezone.now(),
+                    batch_hosts=batch_hosts_json  # 所有记录都包含完整的主机列表
+                )
+                individual_applications.append(application)
+            except ServerInfo.DoesNotExist:
+                # 服务器不存在时也创建记录，但不关联具体服务器，仍然存储主机列表
+                application = PermissionApplication.objects.create(
+                    applicant=request.user,
+                    server=None,
+                    account_name=username,
+                    reason=reason,
+                    duration=0,
+                    status='rejected',
+                    operation_type='batch_view',
+                    batch_hosts=batch_hosts_json  # 即使服务器不存在也存储主机列表
+                )
+                individual_applications.append(application)
+
         # 获取服务器密码
         server_passwords = []
         for host in server_hosts:
@@ -2511,7 +2560,7 @@ def get_batch_server_passwords(request):
                     'host': host,
                     'error': '服务器不存在'
                 })
-
+        logger.info(f"管理员 {request.user.user_name} 批量获取了 {len(server_hosts)} 个服务器的密码，原因: {reason}")
         return JsonResponse({
             'status': 'success',
             'servers': server_passwords

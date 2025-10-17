@@ -261,6 +261,7 @@ class PermissionApplication(models.Model):
     OPERATION_TYPES = [
         ('view', '查看'),
         ('modify', '修改'),
+        ('batch_view', '批量查看'),  # 新增批量查看类型
     ]
     operation_type = models.CharField(
         verbose_name='操作类型',
@@ -312,6 +313,13 @@ class PermissionApplication(models.Model):
         null=True,
         blank=True,
         help_text='OTP验证码发送的时间'
+    )
+    # 添加批量申请主机列表字段（配合views中批量申请接口的汇总记录使用）
+    batch_hosts = models.TextField(
+        verbose_name='批量申请主机列表',
+        blank=True,
+        null=True,
+        help_text='批量申请时的主机列表，JSON格式存储'
     )
     
     class Meta:

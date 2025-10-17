@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // 检查过期时间是否合理
         if (expirationTime <= now) {
             alert('警告：密码已过期或即将过期，请重新申请权限！');
-            clearSavedCountdownInfo();
+            // clearSavedCountdownInfo();
             return;
         }
 
@@ -512,17 +512,17 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('accountInfo').textContent = `${serverInfo.username}`;
 
         // 填充申请者信息（如果有）
-        if (serverInfo.applicant) {
-            document.getElementById('applicantInfo').textContent = serverInfo.applicant;
-        } else {
-            document.getElementById('applicantInfo').textContent = '未知';
-        }
+        // if (serverInfo.applicant) {
+        //     document.getElementById('applicantInfo').textContent = serverInfo.applicant;
+        // } else {
+        //     document.getElementById('applicantInfo').textContent = '未知';
+        // }
 
-        if (serverInfo.application_time) {
-            document.getElementById('applicationTimeInfo').textContent = serverInfo.application_time;
-        } else {
-            document.getElementById('applicationTimeInfo').textContent = '未知';
-        }
+        // if (serverInfo.application_time) {
+        //     document.getElementById('applicationTimeInfo').textContent = serverInfo.application_time;
+        // } else {
+        //     document.getElementById('applicationTimeInfo').textContent = '未知';
+        // }
 
         // 显示倒计时区域
         const countdownSection = document.getElementById('countdownSection');
@@ -541,6 +541,10 @@ document.addEventListener('DOMContentLoaded', function () {
             countdownSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
     }
+
+    // 修改 showCountdownWithPassword 函数，移除原来的事件绑定代码
+
+
     // 显示倒计时和密码区域（用于manual模式）
     function showCountdownWithPassword(serverInfo) {
         console.log("在手动模式下显示倒计时和密码信息:", serverInfo);
@@ -617,9 +621,9 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(function() {
                 const toggleBtn = document.getElementById('mainTogglePasswordBtn');
                 const passwordField = document.getElementById('mainPasswordValue');
-                const copyBtn = document.getElementById('mainCopyPasswordBtn');
+                // const copyBtn = document.getElementById('mainCopyPasswordBtn');
                 
-                if (toggleBtn && passwordField && copyBtn) {
+                if (toggleBtn && passwordField) {
                     // 按住显示，松开隐藏
                     toggleBtn.addEventListener('mousedown', function() {
                         passwordField.type = 'text';
@@ -659,12 +663,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
                         toggleBtn.title = "按住显示密码";
                     });
-                    
-                    // 复制按钮事件
-                    copyBtn.addEventListener('click', function() {
-                        // 无论密码是否可见，都复制真实密码
-                        copyTextToClipboard(window.currentPassword || serverInfo.password);
-                    });
                 }
             }, 100);
         } else {
@@ -680,11 +678,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (toggleBtn) {
                 toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
                 toggleBtn.title = "按住显示密码";
-            }
-            
-            const copyBtn = document.getElementById('mainCopyPasswordBtn');
-            if (copyBtn) {
-                copyBtn.disabled = true;
             }
         }
 
@@ -1113,6 +1106,49 @@ document.addEventListener('DOMContentLoaded', function () {
             // 恢复按钮状态
             verifyBtn.innerHTML = originalText;
             verifyBtn.disabled = false;
+        }
+    });
+
+    // 使用事件委托处理复制按钮点击事件
+    document.addEventListener('click', function(e) {
+        // 处理倒计时区域的复制按钮
+        if (e.target && e.target.id === 'copyPasswordBtn') {
+            // 从保存的倒计时信息中获取密码
+            const savedCountdown = localStorage.getItem('serverCountdownInfo');
+            if (savedCountdown) {
+                try {
+                    const countdownInfo = JSON.parse(savedCountdown);
+                    copyPasswordToClipboard(countdownInfo.password);
+                } catch (err) {
+                    console.error('解析保存的倒计时信息失败:', err);
+                    alert('无法复制密码，请刷新页面后重试');
+                }
+            } else {
+                alert('密码信息已过期，请重新申请权限');
+            }
+        }
+
+        // 处理主密码区域的复制按钮
+        if (e.target && e.target.id === 'mainCopyPasswordBtn') {
+            // 从保存的密码或当前密码中获取
+            const password = window.currentPassword;
+            if (password) {
+                copyTextToClipboard(password);
+            } else {
+                // 从保存的倒计时信息中获取密码
+                const savedCountdown = localStorage.getItem('serverCountdownInfo');
+                if (savedCountdown) {
+                    try {
+                        const countdownInfo = JSON.parse(savedCountdown);
+                        copyTextToClipboard(countdownInfo.password);
+                    } catch (err) {
+                        console.error('解析保存的倒计时信息失败:', err);
+                        alert('无法复制密码，请刷新页面后重试');
+                    }
+                } else {
+                    alert('密码信息已过期，请重新申请权限');
+                }
+            }
         }
     });
 });
