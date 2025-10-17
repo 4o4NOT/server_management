@@ -1123,7 +1123,12 @@ def apply_permission(request):
         duration = float(data.get("duration", 0))  # 改为float以支持小数
         reason = data.get("reason", "").strip()
         operation_type = data.get("operation_type", "view")  # 默认为查看
-        maintenance_ticket = data.get("maintenance_ticket", "").strip()
+        # 修复：安全地处理 maintenance_ticket，防止 None 调用 strip()
+        maintenance_ticket = data.get("maintenance_ticket", "")
+        if maintenance_ticket:
+            maintenance_ticket = maintenance_ticket.strip()
+        else:
+            maintenance_ticket = ""
 
         if not account_name or duration <= 0:
             return JsonResponse({"status": "error", "message": "账户名或时长无效"}, status=400)
