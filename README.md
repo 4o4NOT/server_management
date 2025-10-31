@@ -42,6 +42,47 @@
 + **通信**: SSH, HTTP/HTTPS
 + **通知**: 钉钉机器人API
 
+## 项目目录
+```plain
+server_management/  
+├── app01/                     # 主应用目录
+│   ├── models.py             # 数据模型定义
+│   ├── views.py              # 视图处理逻辑
+│   ├── urls.py              # URL路由配置
+│   └── admin.py             # Django管理后台配置
+├── server_management/        # 项目配置目录
+│   ├── settings.py          # 项目配置文件
+│   ├── urls.py             # 主URL配置
+│   └── config.py           # 自定义配置文件
+├── tasks/
+│   ├── apps.py           # 项目配置文件初始化和配置后台任务
+│   └── config.py         # 后台任务实现文件
+├── templates/               # HTML模板文件
+│   ├── footer.html            # 统一页脚页面
+│   ├── index.html              # 登录后首页
+│   ├── change_password.html    # 修改密码页面
+│   ├── login.html              # 登录页面
+│   ├── register.html           # 注册页面
+│   ├── server_management.html   # 服务器管理页面
+│   └──user_management.html      # 用户管理页面
+├── static/                  # 静态资源文件(css,js,images)
+│   ├── css
+│   │   ├── change_password.css  # 修改密码页面样式
+│   │   ├── custom.css            # 登录后首页样式
+│   │   ├── login.css            # 登录页面样式
+│   │   ├── register.css          # 注册页面样式
+│   │   ├── server_management.css  # 服务器管理页面样式
+│   │   └──  user_management.css   # 用户管理页面样式
+│   ├── js
+│   │   ├── custom.js     # 登录后首页js
+│   │   ├── login.js      # 登录页面js
+│   │   ├── register.js   # 注册页面js
+│   │   ├── server_management.js  # 服务器管理页面js
+│   │   └── user_management.js    # 用户管理页面样式
+├── manage.py               # Django管理脚本
+└── requirements.txt         # 项目依赖包列表
+```
+
 ## 安装部署
 ### 环境要求
 + Python 3.7+
@@ -265,9 +306,63 @@ curl -X POST http://localhost:8000/api/batch-passwords/ \
   -b cookies.txt \
   -d '{
     "hosts": ["10.199.0.52", "10.199.0.53"],
-    "usernam": "test"
+    "username": "test",
+    "reason": "批量测试",
+    "token_code": "070328"
   }'
 ```
+## 后台表
+### 用户信息表(user_info)
+|字段名|类型|描述|
+|---|---|---|
+|id|Integer|主键，自增ID|
+|user_name|Char(20)|用户名，唯一|
+|phone|Char(11)|手机号，唯一|
+|password|Char(128)|加密后的密码|
+|is_superuser|Boolean|是否为超级用户|
+|is_active|Boolean|用户是否激活|
+|last_login|DateTime|最后登录时间|
+|date_joined|DateTime|注册时间|
+|otp_secret|Char(32)|OTP密钥|
+|otp_active|Boolean|OTP是否激活|
+
+### 服务器管理表(server_info)
+|字段名|类型|描述|
+|---|---|---|
+|id|Integer|主键，自增ID|
+|host|Char(100)|主机地址|
+|port|Integer|端口号，默认22|
+|username|Char(50)|登录用户名|
+|password|Char(255)|加密后的密码|
+|description|Text|服务器描述信息|
+|last_password_change|DateTime|最后密码修改时间|
+|current_duration|Integer|当前密码有效期（小时）|
+|generated_password|Char(128)|生成的临时密码|
+|password_expiration_time|DateTime|密码过期时间|
+|password_change_type|Char(20)|密码修改类型|
+
+### 权限申请记录表 (permission_application)
+|字段名|类型|描述|
+|---|---|---|
+|id|Integer|主键，自增ID|
+|applicant_id|Integer|申请人ID（外键关联user_info）| 
+|server_id|Integer|目标服务器ID（外键关联server_info）| 
+|account_name|Integer|申请访问的账户名| 
+|reason|Text|申请原因| 
+|duration|Integer|申请时长（小时）| 
+|status|Char(30)|申请状态| 
+|applied_at|DateTime|申请时间| 
+|operation_type|Char(10)|操作类型（查看/修改/批量查看）| 
+|maintenance_ticket|Char(50)|运维单号（修改操作时必填）| 
+|approved_at|DateTime|批准时间| 
+|expired_at|DateTime|过期时间| 
+|verification_attempts|Integer|验证尝试次数| 
+|last_verification_attempt|DateTime|最后验证尝试时间| 
+|verification_code_sent|Boolean|验证码是否已发送| 
+|verification_code_sent_at|DateTime|验证码发送时间| 
+|batch_hosts|Text|批量申请主机列表（JSON格式）| 
+
+
 ## 维护管理
 
 ### 日志查看
