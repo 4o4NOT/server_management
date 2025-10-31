@@ -1123,8 +1123,8 @@ def apply_permission(request):
         duration = float(data.get("duration", 0))  # 改为float以支持小数
         reason = data.get("reason", "").strip()
         operation_type = data.get("operation_type", "view")  # 默认为查看
-        # 修复：安全地处理 maintenance_ticket，防止 None 调用 strip()
-        maintenance_ticket = data.get("maintenance_ticket", "")
+        maintenance_ticket = data.get("maintenance_ticket", "") or ""
+        maintenance_ticket = maintenance_ticket.strip()
         if maintenance_ticket:
             maintenance_ticket = maintenance_ticket.strip()
         else:
@@ -2136,8 +2136,11 @@ def available_servers_for_user(request):
     只返回主机地址和账户名，不返回密码等敏感信息
     """
     try:
-        # 获取所有服务器信息（不包含密码等敏感信息）
-        servers = ServerInfo.objects.all().values(
+        # 获取搜索参数
+        search_query = request.GET.get('search', '').strip()
+
+        # 获取服务器查询集
+        servers_queryset = ServerInfo.objects.all().values(
             'id',
             'host',
             'port',
@@ -2145,18 +2148,39 @@ def available_servers_for_user(request):
             'description'
         )
 
+        # 应用搜索过滤
+        if search_query:
+            servers_queryset = servers_queryset.filter(
+                Q(host__icontains=search_query) |
+                Q(username__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+
+        # 添加分页以提高性能
+        page = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 20))  # 默认每页20条
+        paginator = Paginator(servers_queryset, page_size)
+
+        try:
+            servers_page = paginator.page(page)
+        except EmptyPage:
+            servers_page = paginator.page(paginator.num_pages)
+
         # 转换为列表并返回
-        servers_list = list(servers)
+        servers_list = list(servers_page)
 
         return JsonResponse({
             'status': 'success',
-            'data': servers_list
+            'data': servers_list,
+            'total': paginator.count,
+            'current_page': page,
+            'total_pages': paginator.num_pages
         })
     except Exception as e:
-        logger.error(f"获取可申请服务器列表失败: {str(e)}")
+        logger.error(f"获取可申请服务器列表失败: {str(e)}", exc_info=True)
         return JsonResponse({
             'status': 'error',
-            'message': '获取服务器列表失败'
+            'message': f'获取服务器列表失败: {str(e)}'
         }, status=500)
 
 @login_required
@@ -2499,7 +2523,7 @@ def get_batch_server_passwords(request):
                 'message': '未找到已激活的管理员令牌'
             }, status=400, json_dumps_params={'ensure_ascii': False})
 
-         # 验证OTP
+        # 验证OTP
         totp = pyotp.TOTP(admin_user.otp_secret)
         if not totp.verify(token_code, valid_window=Config.OTP_VALID_WINDOW):
             return JsonResponse({
@@ -2523,7 +2547,7 @@ def get_batch_server_passwords(request):
                     reason=reason,
                     duration=0,
                     status='approved',
-                    operation_type='batch_view',
+                    operation_type='batch',
                     approved_at=timezone.now(),
                     batch_hosts=batch_hosts_json  # 所有记录都包含完整的主机列表
                 )
@@ -2537,7 +2561,7 @@ def get_batch_server_passwords(request):
                     reason=reason,
                     duration=0,
                     status='rejected',
-                    operation_type='batch_view',
+                    operation_type='batch',
                     batch_hosts=batch_hosts_json  # 即使服务器不存在也存储主机列表
                 )
                 individual_applications.append(application)

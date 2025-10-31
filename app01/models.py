@@ -261,7 +261,7 @@ class PermissionApplication(models.Model):
     OPERATION_TYPES = [
         ('view', '查看'),
         ('modify', '修改'),
-        ('batch_view', '批量查看'),  # 新增批量查看类型
+        ('batch', '批量'),  # 新增批量查看类型
     ]
     operation_type = models.CharField(
         verbose_name='操作类型',
