@@ -2221,7 +2221,8 @@ def bulk_apply_permission(request):
         reason = data.get("reason", "").strip()
         duration = float(data.get("duration", 0))  # 改为float以支持小数
         operation_type = data.get("operation_type", "view")  # 默认为查看
-        maintenance_ticket = data.get("maintenance_ticket", "").strip()
+        maintenance_ticket = data.get("maintenance_ticket", "") or ""
+        maintenance_ticket = maintenance_ticket.strip()
 
         logger.debug(f"Bulk apply data - applications: {applications}, reason: '{reason}', duration: {duration}")
         logger.debug(f"Applications count: {len(applications)}")
