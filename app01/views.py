@@ -30,6 +30,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 
 from .models import UserInfo, ServerInfo, PermissionApplication
+import sys
 from server_management.config import Config
 
 
@@ -130,8 +131,43 @@ def index(request):
     user = request.user
     logger.info(f"用户 {user.user_name} 访问首页")
 
-    # 获取服务器数据，用于自动完成
-    servers = list(ServerInfo.objects.all().values('id', 'host', 'port', 'username', 'description'))
+    # 获取服务器数据，用于自动完成（按主机分组）
+    servers_queryset = ServerInfo.objects.all().values('id', 'host', 'port', 'username', 'description').order_by('host', 'username')
+
+    logger.info(f"总共查询到 {servers_queryset.count()} 条服务器记录")
+
+    # 将服务器数据按主机分组，确保同一主机的所有用户都能显示
+    servers_by_host = {}
+    host_user_count = {}  # 用于统计每个主机的用户数
+
+    for server in servers_queryset:
+        host = server['host']
+        if host not in servers_by_host:
+            servers_by_host[host] = {
+                'host': host,
+                'users': []
+            }
+            host_user_count[host] = 0
+        servers_by_host[host]['users'].append({
+            'id': server['id'],
+            'port': server['port'],
+            'username': server['username'],
+            'description': server['description'] or ''
+        })
+        host_user_count[host] += 1
+
+        # 记录主机和用户统计信息
+    logger.info(f"总共加载了 {len(servers_by_host)} 个主机")
+
+    # 找出用户数异常的主机（用户数小于2的）
+    single_user_hosts = {host: count for host, count in host_user_count.items() if count < 2}
+    logger.info(f"只有单个用户的主机数量: {len(single_user_hosts)}")
+
+    if single_user_hosts:
+        logger.info(f"部分单用户主机示例: {dict(list(single_user_hosts.items())[:10])}")
+
+    # 转换为列表格式
+    servers = list(servers_by_host.values())
 
     # 获取时长选项
     duration_options = Config.get_duration_options()
@@ -141,9 +177,20 @@ def index(request):
 
     # 添加调试日志
     logger.info(f"密码显示模式配置: {password_display_mode}")
+    logger.info(f"总共加载了 {len(servers)} 个主机")
+
+    # 记录服务器数据大小
+    servers_json = json.dumps(servers, ensure_ascii=False)
+    logger.info(f"服务器数据JSON大小: {sys.getsizeof(servers_json)} 字节")
+    logger.info(f"服务器数据JSON长度: {len(servers_json)} 字符")
+    logger.info(f"服务器数据前100字符: {servers_json[:100]}")
+
+    # 检查是否有数据被截断的迹象
+    if len(servers) < len(servers_by_host):
+        logger.warning("警告: 分组后的主机数量大于原始数据数量，可能存在数据重复")
 
     context = {
-        'servers': json.dumps(servers),
+        'servers': json.dumps(servers, ensure_ascii=False),  # 确保中文正确编码
         'duration_options': duration_options,
         'password_display_mode': password_display_mode,
     }
@@ -816,11 +863,11 @@ def add_server(request):
     添加服务器（仅限管理员）
     支持JSON和表单两种数据格式
     """
-    logger.debug("收到添加服务器请求")
-    logger.debug(f"请求方法: {request.method}")
-    logger.debug(f"请求内容类型: {request.content_type}")
-    logger.debug(f"请求体大小: {len(request.body)} 字节")
-    logger.debug(f"请求体内容: {request.body}")
+    # logger.debug("收到添加服务器请求")
+    # logger.debug(f"请求方法: {request.method}")
+    # logger.debug(f"请求内容类型: {request.content_type}")
+    # logger.debug(f"请求体大小: {len(request.body)} 字节")
+    # logger.debug(f"请求体内容: {request.body}")
 
     if not request.user.is_superuser:
         response = JsonResponse({

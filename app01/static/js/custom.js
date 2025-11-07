@@ -52,18 +52,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const hostSuggestions = document.getElementById('hostSuggestions');
     const accountNameSelect = document.getElementById('accountName');
     let serverData = [];
-    
+
     // 获取密码显示配置（在 DOMContentLoaded 事件中添加）
     const passwordDisplayMode = window.PASSWORD_CONFIG ? window.PASSWORD_CONFIG.display_mode : 'auto_copy';
     const modalDisplayDuration = window.PASSWORD_CONFIG ? window.PASSWORD_CONFIG.modal_display_duration : 3;
 
     // 添加调试信息
-    console.log("密码显示配置:", {
-        passwordDisplayMode: passwordDisplayMode,
-        modalDisplayDuration: modalDisplayDuration,
-        PASSWORD_CONFIG: window.PASSWORD_CONFIG
-    });
-    
+    // console.log("密码显示配置:", {
+    //     passwordDisplayMode: passwordDisplayMode,
+    //     modalDisplayDuration: modalDisplayDuration,
+    //     PASSWORD_CONFIG: window.PASSWORD_CONFIG
+    // });
+
     // 密码隐藏定时器
     let passwordHideTimer = null;
     let applyData = null;
@@ -86,24 +86,91 @@ document.addEventListener('DOMContentLoaded', function () {
     // 首先尝试从HTML获取服务器数据，如果没有则通过API获取
     try {
         const serverDataElement = document.getElementById('serverData');
-        if (serverDataElement && serverDataElement.dataset.servers) {
-            serverData = JSON.parse(serverDataElement.dataset.servers);
-            console.log('Server data loaded from data-servers attribute:', serverData);
-        } else if (serverDataElement && serverDataElement.textContent) {
-            const serversJson = serverDataElement.textContent.trim();
-            console.log('Raw server data from textContent:', serversJson);
-            serverData = JSON.parse(serversJson);
-            console.log('Server data loaded from textContent:', serverData);
+        if (serverDataElement) {
+            let rawData;
+            // 优先从 dataset 获取
+            if (serverDataElement.dataset.servers) {
+                rawData = serverDataElement.dataset.servers;
+                // console.log('从data-servers属性获取数据:', rawData.substring(0, 100) + (rawData.length > 100 ? '...' : ''));
+            }
+
+            if (rawData) {
+                // 验证数据是否为有效的JSON格式
+                try {
+                    // 检查数据是否以{或[开头
+                    const trimmedData = rawData.trim();
+                    if (!trimmedData.startsWith('{') && !trimmedData.startsWith('[')) {
+                        throw new Error('数据不是有效的JSON格式');
+                    }
+
+                    // 创建安全的JSON解析函数，处理Unicode转义字符
+                    function safeJsonParse(str) {
+                        // 先尝试直接解析
+                        try {
+                            return JSON.parse(str);
+                        } catch (e) {
+                            // 如果直接解析失败，尝试处理转义字符后再解析
+                            try {
+                                // 处理常见的Unicode转义序列
+                                let processedStr = str.replace(/\\u0022/g, '"')
+                                    .replace(/\\u0027/g, "'")
+                                    .replace(/\\u005C/g, "\\")
+                                    .replace(/\\n/g, "\n")
+                                    .replace(/\\r/g, "\r")
+                                    .replace(/\\t/g, "\t");
+                                return JSON.parse(processedStr);
+                            } catch (e2) {
+                                throw e; // 抛出原始错误
+                            }
+                        }
+                    }
+
+                    const groupedData = safeJsonParse(rawData);
+                    // console.log('解析后的分组数据数量:', groupedData.length);
+
+                    // 将分组数据转换为扁平化数据
+                    serverData = [];
+                    let totalUsers = 0;
+
+                    groupedData.forEach((hostGroup, index) => {
+                        if (hostGroup.users && Array.isArray(hostGroup.users)) {
+                            totalUsers += hostGroup.users.length;
+                            hostGroup.users.forEach(user => {
+                                serverData.push({
+                                    id: user.id,
+                                    host: hostGroup.host,
+                                    port: user.port,
+                                    username: user.username,
+                                    description: user.description
+                                });
+                            });
+                        } else {
+                            console.warn(`主机 ${hostGroup.host} 没有有效用户数据`);
+                        }
+                    });
+
+                    // console.log(`总共处理了 ${groupedData.length} 个主机，${totalUsers} 个用户`);
+                    // console.log('最终serverData长度:', serverData.length);
+
+                    // 数据加载完成后执行验证
+                    validateServerData();
+                } catch (parseError) {
+                    console.error('JSON解析失败:', parseError);
+                    console.error('原始数据:', rawData);
+                    throw parseError;
+                }
+            } else {
+                console.log('没有找到服务器数据，通过API获取');
+                fetchAvailableServers();
+            }
         } else {
-            console.log('No server data found in HTML element, fetching from API');
-            // 如果HTML中没有服务器数据，则通过API获取
+            console.log('未找到serverData元素，通过API获取');
             fetchAvailableServers();
         }
-        console.log('Parsed server data:', serverData);
-        console.log('Server data length:', serverData.length);
     } catch (e) {
         console.error('服务器数据解析失败:', e);
-        // 如果解析失败，则通过API获取
+        console.error('错误堆栈:', e.stack);
+        // 如果解析失败，通过 API 获取数据
         fetchAvailableServers();
     }
 
@@ -181,7 +248,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        console.log('Server data content:', serverData);
+        console.log('Server data content length:', serverData.length);
+
+        // 增加性能优化，但适当增加匹配结果数量
         const matchedServers = serverData.filter(server => {
             // 确保 server 对象存在且有 host 属性
             if (!server || !server.host) {
@@ -191,34 +260,55 @@ document.addEventListener('DOMContentLoaded', function () {
             const hostMatch = server.host.toLowerCase().includes(query);
             const descriptionMatch = server.description && server.description.toLowerCase().includes(query);
             const usernameMatch = server.username && server.username.toLowerCase().includes(query);
-            console.log(`Checking server: ${server.host}, host match: ${hostMatch}, description match: ${descriptionMatch}, username match: ${usernameMatch}`);
-            return hostMatch || descriptionMatch || usernameMatch;
-        }).slice(0, 5);
+            const portMatch = server.port && server.port.toString().includes(query);
+            return hostMatch || descriptionMatch || usernameMatch || portMatch;
+        }).slice(0, 30); // 增加显示数量到30个以提高匹配率
 
+        console.log('Matched servers count:', matchedServers.length);
         console.log('Matched servers:', matchedServers);
 
         if (matchedServers.length > 0) {
             const fragment = document.createDocumentFragment();
+            // 按主机分组显示
+            const groupedServers = {};
             matchedServers.forEach(server => {
-                const div = document.createElement('div');
-                div.className = 'p-2 hover:bg-light cursor-pointer';
-                div.textContent = `${server.host}:${server.port} (${server.username})${server.description ? ' - ' + server.description : ''}`;
-                div.dataset.host = server.host;
-                div.addEventListener('mousedown', function () {
-                    targetHostInput.value = server.host;
-                    // 更新并选择账户名
-                    updateAccountOptions(accountNameSelect, server.host);
-                    hostSuggestions.classList.add('hidden');
-                });
-                fragment.appendChild(div);
+                if (!groupedServers[server.host]) {
+                    groupedServers[server.host] = [];
+                }
+                groupedServers[server.host].push(server);
             });
+
+            Object.keys(groupedServers).forEach(host => {
+                const servers = groupedServers[host];
+                console.log(`主机 ${host} 找到 ${servers.length} 个用户`);
+                servers.forEach(server => {
+                    const div = document.createElement('div');
+                    div.className = 'p-2 hover:bg-light cursor-pointer';
+                    div.textContent = `${server.host}:${server.port} (${server.username})${server.description ? ' - ' + server.description : ''}`;
+                    div.dataset.host = server.host;
+                    div.dataset.username = server.username;
+                    div.addEventListener('mousedown', function () {
+                        targetHostInput.value = server.host;
+                        // 更新并选择账户名
+                        updateAccountOptions(accountNameSelect, server.host);
+                        // 自动选择匹配的用户名
+                        setTimeout(() => {
+                            accountNameSelect.value = server.username;
+                        }, 0);
+                        hostSuggestions.classList.add('hidden');
+                    });
+                    fragment.appendChild(div);
+                });
+            });
+
             hostSuggestions.innerHTML = '';
             hostSuggestions.appendChild(fragment);
             hostSuggestions.classList.remove('hidden');
 
-            // 当只有一个匹配项时，自动更新账户名选项
-            if (matchedServers.length === 1) {
-                updateAccountOptions(accountNameSelect, matchedServers[0].host);
+            // 当只有一个匹配主机时，自动更新账户名选项
+            const uniqueHosts = Object.keys(groupedServers);
+            if (uniqueHosts.length === 1) {
+                updateAccountOptions(accountNameSelect, uniqueHosts[0]);
             }
         } else {
             hostSuggestions.innerHTML = '<div class="p-2 text-muted">没有找到匹配的服务器</div>';
@@ -232,6 +322,112 @@ document.addEventListener('DOMContentLoaded', function () {
         // 延迟隐藏，确保点击建议项时不会立即隐藏
         setTimeout(() => hostSuggestions.classList.add('hidden'), 200);
     });
+    function safeJsonParse(str) {
+        try {
+            // 首先尝试直接解析
+            return JSON.parse(str);
+        } catch (e) {
+            try {
+                // 如果失败，尝试处理Unicode转义
+                let processedStr = str.replace(/\\u0022/g, '"');
+                return JSON.parse(processedStr);
+            } catch (e2) {
+                // 如果仍然失败，尝试使用eval（仅作为最后手段，需要注意安全性）
+                try {
+                    return eval('(' + str + ')');
+                } catch (e3) {
+                    throw e; // 抛出原始错误
+                }
+            }
+        }
+    }
+    function loadServersPage(page = 1, pageSize = 50) {
+        fetch(`/api/available_servers/?page=${page}&page_size=${pageSize}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    // 将新数据合并到现有数据中
+                    result.data.forEach(server => {
+                        // 检查是否已存在该服务器记录
+                        const exists = serverData.some(item =>
+                            item.host === server.host && item.username === server.username);
+                        if (!exists) {
+                            serverData.push(server);
+                        }
+                    });
+
+                    console.log(`加载第${page}页数据，当前总数据量:`, serverData.length);
+
+                    // 如果还有更多数据，继续加载下一页
+                    if (result.current_page < result.total_pages) {
+                        loadServersPage(page + 1, pageSize);
+                    } else {
+                        console.log('所有服务器数据加载完成');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('加载服务器数据时发生错误:', error);
+            });
+    }
+
+    // 添加数据完整性检查函数
+    function validateServerData() {
+        // 检查是否有重复的主机用户组合
+        const hostUserMap = new Map();
+        let duplicates = 0;
+
+        serverData.forEach(item => {
+            const key = `${item.host}-${item.username}`;
+            if (hostUserMap.has(key)) {
+                duplicates++;
+                console.warn('发现重复的主机用户组合:', key);
+            } else {
+                hostUserMap.set(key, true);
+            }
+        });
+
+        if (duplicates > 0) {
+            console.warn(`发现 ${duplicates} 个重复的主机用户组合`);
+        }
+
+        // 检查数据完整性
+        const invalidItems = serverData.filter(item =>
+            !item.host || !item.username || !item.id);
+
+        if (invalidItems.length > 0) {
+            console.warn('发现无效数据项:', invalidItems);
+        }
+
+        console.log('数据验证完成，总数据量:', serverData.length);
+    }
+
+// 在数据加载完成后调用验证函数
+// 在处理完服务器数据后添加:
+    validateServerData();
+
+    // 验证数据是否为有效的JSON
+    function isValidJSON(str) {
+        try {
+            JSON.parse(str);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+// 检查数据是否可能被截断
+    function isDataTruncated(data) {
+        // 检查是否以完整的JSON结构结尾
+        const trimmed = data.trim();
+        if (trimmed.startsWith('{') && !trimmed.endsWith('}')) {
+            return true;
+        }
+        if (trimmed.startsWith('[') && !trimmed.endsWith(']')) {
+            return true;
+        }
+        return false;
+    }
 
     // 更新账号选项
     function updateAccountOptions(selectElement, host) {
@@ -247,11 +443,14 @@ document.addEventListener('DOMContentLoaded', function () {
         // 获取匹配的服务器账号
         const matchedServers = serverData.filter(server => server.host === host);
 
+        console.log(`Found ${matchedServers.length} accounts for host: ${host}`);
+        console.log('Matched servers details:', matchedServers);
+
         // 添加选项
         matchedServers.forEach(server => {
             const option = document.createElement('option');
             option.value = server.username;
-            option.textContent = server.username;
+            option.textContent = `${server.username} (${server.description || '无描述'})`;
             option.dataset.serverId = server.id;
             selectElement.appendChild(option);
         });
@@ -260,6 +459,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (matchedServers.length === 1) {
             selectElement.value = matchedServers[0].username;
         }
+
+        console.log(`Account options updated for host ${host}, found ${matchedServers.length} accounts`);
     }
 
     // 清空账号选项
@@ -304,6 +505,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(result => {
                 if (result.status === 'success') {
+                    // API 返回的是扁平化数据，直接使用
                     serverData = result.data;
                     console.log('Server data loaded from API:', serverData);
 
@@ -330,7 +532,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         // 滚动到申请表单
                         document.getElementById('applySection').scrollIntoView({ behavior: 'smooth' });
                     }
-                    
+
                     // 服务器数据加载完成后，再次检查保存的倒计时信息
                     // 这样可以确保在显示倒计时时能够正确处理服务器相关信息
                     setTimeout(checkSavedCountdownInfo, 100);
@@ -366,14 +568,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function togglePasswordVisibility() {
         const passwordField = document.getElementById('passwordValue');
         const toggleBtn = document.getElementById('togglePasswordBtn');
-        
+
         if (passwordField.type === 'password') {
             // 显示密码
             passwordField.type = 'text';
             passwordField.value = window.currentPassword; // 使用存储的密码
             toggleBtn.innerHTML = '<i class="fas fa-eye-slash me-1"></i>隐藏';
             document.getElementById('copyPasswordFromSectionBtn').disabled = false;
-            
+
             // 启动自动隐藏计时器
             startPasswordHideTimer(modalDisplayDuration, passwordField);
         } else {
@@ -382,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function () {
             passwordField.value = '••••••••';
             toggleBtn.innerHTML = '<i class="fas fa-eye me-1"></i>显示';
             document.getElementById('copyPasswordFromSectionBtn').disabled = true;
-            
+
             // 清除计时器
             if (passwordHideTimer) {
                 clearTimeout(passwordHideTimer);
@@ -418,7 +620,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     '<span class="text-danger">密码已隐藏，点击显示按钮可再次查看</span>';
             }
         }, 1000);
-        
+
         passwordHideTimer = timer;
     }
 
@@ -581,11 +783,11 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             document.getElementById('applicationTimeInfo').textContent = new Date().toLocaleString('zh-CN');
         }
-        
+
         // 添加密码显示区域（如果尚未添加）
         const countdownDisplay = document.getElementById('countdownDisplay');
         const passwordAreaExists = document.getElementById('mainPasswordValue');
-        
+
         if (!passwordAreaExists) {
             // 添加密码显示区域
             const passwordArea = `
@@ -613,16 +815,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
             `;
-            
+
             // 插入密码区域到倒计时区域中（在倒计时显示之前）
             countdownDisplay.insertAdjacentHTML('beforebegin', passwordArea);
-            
+
             // 添加事件监听器
             setTimeout(function() {
                 const toggleBtn = document.getElementById('mainTogglePasswordBtn');
                 const passwordField = document.getElementById('mainPasswordValue');
                 // const copyBtn = document.getElementById('mainCopyPasswordBtn');
-                
+
                 if (toggleBtn && passwordField) {
                     // 按住显示，松开隐藏
                     toggleBtn.addEventListener('mousedown', function() {
@@ -631,14 +833,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
                         toggleBtn.title = "松开隐藏密码";
                     });
-                    
+
                     toggleBtn.addEventListener('mouseup', function() {
                         passwordField.type = 'password';
                         passwordField.value = '••••••••';
                         toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
                         toggleBtn.title = "按住显示密码";
                     });
-                    
+
                     toggleBtn.addEventListener('mouseleave', function() {
                         // 鼠标离开按钮时也隐藏密码
                         passwordField.type = 'password';
@@ -646,7 +848,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
                         toggleBtn.title = "按住显示密码";
                     });
-                    
+
                     // 对于触摸设备，添加触摸事件支持
                     toggleBtn.addEventListener('touchstart', function(e) {
                         e.preventDefault();
@@ -655,7 +857,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
                         toggleBtn.title = "松开隐藏密码";
                     });
-                    
+
                     toggleBtn.addEventListener('touchend', function(e) {
                         e.preventDefault();
                         passwordField.type = 'password';
@@ -672,7 +874,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 passwordField.type = 'password';
                 passwordField.value = '••••••••';
             }
-            
+
             // 更新按钮状态
             const toggleBtn = document.getElementById('mainTogglePasswordBtn');
             if (toggleBtn) {
@@ -734,7 +936,7 @@ document.addEventListener('DOMContentLoaded', function () {
             hoursElement.classList.add('countdown-critical');
             minutesElement.classList.add('countdown-critical');
             secondsElement.classList.add('countdown-critical');
-            
+
             // 清除保存的信息
             clearSavedCountdownInfo();
             return;
@@ -893,7 +1095,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // 获取当前用户信息
             const userInfoElement = document.querySelector('.user-info .fw-bold');
             const currentUser = userInfoElement ? userInfoElement.textContent.trim() : '未知用户';
-            
+
             const countdownInfo = {
                 host: serverInfo.host,
                 port: serverInfo.port,
@@ -977,7 +1179,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 duration: duration,
                 operation_type: operationType,
                 maintenance_ticket: operationType === 'modify' ? maintenanceTicket : null
-        };
+            };
 
             console.log("准备发送申请数据:", applyData);
 

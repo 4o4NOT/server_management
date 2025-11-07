@@ -11,50 +11,50 @@
     <link href="{% static 'css/all.min.css' %}" rel="stylesheet"></link>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/custom.js' %}"></script>
-    
+
 </head>
 <body>
-        <div id="serverData" style="display: none;"></div>
-        <script>
-        // 定义全局URL变量，解决JavaScript中无法使用Django模板语法的问题
-        window.APP_URLS = {
-            verify_otp: "{% url 'verify_otp' %}",
-            apply_permission: "{% url 'apply_permission' %}",
-            check_server_password_expiration: "{% url 'check_server_password_expiration' %}"
-        };
-        
-        // 定义密码显示配置
-        window.PASSWORD_CONFIG = {
-            display_mode: "{{ password_display_mode|default:'auto_copy' }}",
-        };
-        </script>
-        <div class="container py-5 flex-grow-1">
-        <!-- 页面头部 -->
-        <div class="header-gradient p-4 mb-8">
-            <div class="d-flex flex-column md:flex-row justify-content-between align-items-center">
-                <div class="text-center md:text-left mb-4 md:mb-0">
-                    <h1 class="mb-3"><i class="fas fa-user-shield app-logo me-2"></i>权限申请系统</h1>
-                    <p class="mb-0 app-tagline">安全、便捷的权限管理系统</p>
-                </div>
-                <!-- 用户操作区域 -->
-                        <div class="user-actions">
-                            <div class="user-info">
-                                <div class="user-avatar">{{ user.user_name|first|upper }}</div>
-                                <div class="d-none d-md-block">
-                                    <div class="fw-bold">{{ user.user_name }}</div>
-                                    <small class="text-white-50">{{ user.phone }}</small>
-                                </div>
-                            </div>
-                            <div class="btn-group gap-2">
-                                <a href="{% url 'change_password' %}" class="btn btn-sm">
-                                    <i class="fas fa-key me-1"></i>修改密码
-                                </a>
-                                <a href="{% url 'logout' %}" class="btn btn-sm">
-                                    <i class="fas fa-sign-out-alt me-1"></i>登出
-                                </a>
-                            </div>
-                        </div>
+<script>
+    window.SERVER_DATA = {{ servers|safe }};
+    // 定义全局URL变量，解决JavaScript中无法使用Django模板语法的问题
+    window.APP_URLS = {
+        verify_otp: "{% url 'verify_otp' %}",
+        apply_permission: "{% url 'apply_permission' %}",
+        check_server_password_expiration: "{% url 'check_server_password_expiration' %}"
+    };
+
+    // 定义密码显示配置
+    window.PASSWORD_CONFIG = {
+        display_mode: "{{ password_display_mode|default:'auto_copy' }}",
+    };
+</script>
+<div class="container py-5 flex-grow-1">
+    <!-- 页面头部 -->
+    <div class="header-gradient p-4 mb-8">
+        <div class="d-flex flex-column md:flex-row justify-content-between align-items-center">
+            <div class="text-center md:text-left mb-4 md:mb-0">
+                <h1 class="mb-3"><i class="fas fa-user-shield app-logo me-2"></i>权限申请系统</h1>
+                <p class="mb-0 app-tagline">安全、便捷的权限管理系统</p>
             </div>
+            <!-- 用户操作区域 -->
+            <div class="user-actions">
+                <div class="user-info">
+                    <div class="user-avatar">{{ user.user_name|first|upper }}</div>
+                    <div class="d-none d-md-block">
+                        <div class="fw-bold">{{ user.user_name }}</div>
+                        <small class="text-white-50">{{ user.phone }}</small>
+                    </div>
+                </div>
+                <div class="btn-group gap-2">
+                    <a href="{% url 'change_password' %}" class="btn btn-sm">
+                        <i class="fas fa-key me-1"></i>修改密码
+                    </a>
+                    <a href="{% url 'logout' %}" class="btn btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>登出
+                    </a>
+                </div>
+            </div>
+        </div>
 
 
         <!-- 欢迎信息 -->
@@ -67,73 +67,73 @@
         <div class="row justify-content-center">
             <!-- 管理员专属功能 -->
             {% if user.is_superuser %}
-            <!-- 权限申请卡片 -->
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card feature-card fade-in">
-                    <div class="card-body text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-key"></i>
+                <!-- 权限申请卡片 -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card feature-card fade-in">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <h3 class="card-title">用户管理</h3>
+                            <p class="card-text">查看所有用户信息，修改用户密码。</p>
+                            <a href="{% url 'user_management' %}" class="btn btn-primary mt-2">立即查看</a>
                         </div>
-                        <h3 class="card-title">用户管理</h3>
-                        <p class="card-text">查看所有用户信息，修改用户密码。</p>
-                        <a href="{% url 'user_management' %}" class="btn btn-primary mt-2">立即查看</a>
                     </div>
                 </div>
-            </div>
 
-            <!-- 服务器管理卡片 -->
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card feature-card fade-in">
-                    <div class="card-body text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-server"></i>
+                <!-- 服务器管理卡片 -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card feature-card fade-in">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <h3 class="card-title">服务器管理</h3>
+                            <p class="card-text">查看和管理您有权限访问的服务器信息。</p>
+                            <a href="{% url 'server_management' %}" class="btn btn-primary mt-2">查看服务器</a>
                         </div>
-                        <h3 class="card-title">服务器管理</h3>
-                        <p class="card-text">查看和管理您有权限访问的服务器信息。</p>
-                        <a href="{% url 'server_management' %}" class="btn btn-primary mt-2">查看服务器</a>
                     </div>
                 </div>
-            </div>
             {% else %}
-            <!-- 可申请服务器列表卡片 -->
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card feature-card fade-in">
-                    <div class="card-body text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-list"></i>
+                <!-- 可申请服务器列表卡片 -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card feature-card fade-in">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <h3 class="card-title">可申请服务器</h3>
+                            <p class="card-text">查看所有可申请的服务器列表和账户信息。</p>
+                            <a href="{% url 'server_list' %}" class="btn btn-primary mt-2">查看列表</a>
                         </div>
-                        <h3 class="card-title">可申请服务器</h3>
-                        <p class="card-text">查看所有可申请的服务器列表和账户信息。</p>
-                        <a href="{% url 'server_list' %}" class="btn btn-primary mt-2">查看列表</a>
                     </div>
                 </div>
-            </div>
-            <!-- 权限申请卡片 
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card feature-card fade-in">
-                    <div class="card-body text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-file-alt"></i>
+                <!-- 权限申请卡片
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card feature-card fade-in">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <h3 class="card-title">权限申请</h3>
+                            <p class="card-text">申请临时服务器访问权限。</p>
+                            <a href="#applySection" class="btn btn-primary mt-2">立即申请</a>
                         </div>
-                        <h3 class="card-title">权限申请</h3>
-                        <p class="card-text">申请临时服务器访问权限。</p>
-                        <a href="#applySection" class="btn btn-primary mt-2">立即申请</a>
+                    </div>
+                </div> -->
+                <!-- 批量权限申请卡片 -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card feature-card fade-in">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="fas fa-copy"></i>
+                            </div>
+                            <h3 class="card-title">批量申请</h3>
+                            <p class="card-text">批量申请多个服务器访问权限。</p>
+                            <a href="{% url 'bulk_apply' %}" class="btn btn-primary mt-2">批量申请</a>
+                        </div>
                     </div>
                 </div>
-            </div> -->
-            <!-- 批量权限申请卡片 -->
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card feature-card fade-in">
-                    <div class="card-body text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-copy"></i>
-                        </div>
-                        <h3 class="card-title">批量申请</h3>
-                        <p class="card-text">批量申请多个服务器访问权限。</p>
-                        <a href="{% url 'bulk_apply' %}" class="btn btn-primary mt-2">批量申请</a>
-                    </div>
-                </div>
-            </div>
             {% endif %}
         </div>
 
@@ -307,7 +307,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- 添加申请者信息 -->
                 <div class="server-info-box mt-3">
                     <div class="row">
@@ -321,9 +321,9 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <h5 class="text-center mb-4 text-muted">密码将于以下时间后过期:</h5>
-                
+
                 <div class="countdown-display-container">
                     <div id="countdownDisplay" class="countdown-display">
                         <div class="countdown-unit">
@@ -344,7 +344,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="alert alert-countdown">
                     <i class="fas fa-info-circle"></i>
                     <strong>重要提醒:</strong> 请在密码过期前保存您的工作。密码过期后将自动重置，需要重新申请权限。
@@ -370,7 +370,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="server-info-box mt-3">
                     <div class="row">
                         <div class="col-md-8 mb-3 mb-md-0">
@@ -393,14 +393,14 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="alert alert-info" id="passwordVisibilityWarning">
                     <i class="fas fa-info-circle me-1"></i>
                     密码将在 <span id="passwordTimer" class="fw-bold">3</span> 秒后自动隐藏
                 </div>
             </div>
         </div>
-
+        <div id="serverData" data-servers="{{ servers|escapejs }}"></div>
         {% include 'footer.html' %}
     </div>
 </body>
