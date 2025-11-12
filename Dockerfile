@@ -4,7 +4,7 @@ FROM registry.cn-hangzhou.aliyuncs.com/eddy-his/server-management:v1.3
 WORKDIR /app
 
 # 复制项目文件
-COPY server_management/ /app
+COPY . /app/sever_management/
 
 # 暴露端口
 EXPOSE 8000
