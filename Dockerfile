@@ -6,7 +6,7 @@ WORKDIR /app
 RUN rm -rf *
 
 # 复制项目文件
-COPY server_management/ /app
+COPY . /app
 
 # 暴露端口
 EXPOSE 8000
