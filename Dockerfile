@@ -3,6 +3,8 @@ FROM registry.cn-hangzhou.aliyuncs.com/eddy-his/server-management:v1.3
 # 设置工作目录
 WORKDIR /app
 
+RUN rm -rf *
+
 # 复制项目文件
 COPY server_management/ /app
 
