@@ -35,7 +35,7 @@ spec:
           imagePullPolicy: Always
           name: app
           ports:
-            - containerPort: 3000
+            - containerPort: 8000
               protocol: TCP
           resources:
             limits:
