@@ -274,10 +274,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // 令牌管理按钮点击事件（当前用户）
     $('#currentUserTokenBtn').on('click', function () {
         $('#tokenInfo').html('<p>正在加载令牌信息...</p>');
-        $('#tokenQrCode').hide();
-        $('#tokenVerify').hide();
-        $('#resetTokenBtn').hide();
-        $('#verifyTokenBtn').hide();
+        $('#tokenQrCode').addClass('hidden');
+        $('#tokenVerify').addClass('hidden');
+        $('#resetTokenBtn').addClass('hidden');
+        $('#verifyTokenBtn').addClass('hidden');
         $('#qrCodeContainer').html('');
         $('#manageTokenModal').modal('show');
 
@@ -296,28 +296,28 @@ document.addEventListener('DOMContentLoaded', function () {
                         `<img src="data:image/png;base64,${data.qr_code}" style="width:200px;height:200px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.1);" />`
                     );
                     $('#tokenSecret').text(`密钥: ${data.otp_secret}`);
-                    $('#tokenQrCode').show();
-                    $('#tokenVerify').show();
-                    $('#verifyTokenBtn').show();
-                    $('#resetTokenBtn').show();
+                    $('#tokenQrCode').removeClass('hidden');
+                    $('#tokenVerify').removeClass('hidden');
+                    $('#verifyTokenBtn').removeClass('hidden');
+                    $('#resetTokenBtn').removeClass('hidden');
                 } else {
                     // 展示错误提示
                     $('#tokenInfo').html(`<p class="text-danger">${data.message}</p>`);
                     $('#qrCodeContainer').html('');
-                    $('#tokenQrCode').hide();
-                    $('#tokenVerify').hide();
-                    $('#verifyTokenBtn').hide();
-                    $('#resetTokenBtn').hide();
+                    $('#tokenQrCode').addClass('hidden');
+                    $('#tokenVerify').addClass('hidden');
+                    $('#verifyTokenBtn').addClass('hidden');
+                    $('#resetTokenBtn').addClass('hidden');
                 }
             },
             error: function (xhr, status, error) {
                 console.error('获取令牌信息失败:', error);
                 $('#tokenInfo').html('<p class="text-danger">获取令牌信息失败</p>');
                 $('#qrCodeContainer').html('');
-                $('#tokenQrCode').hide();
-                $('#tokenVerify').hide();
-                $('#verifyTokenBtn').hide();
-                $('#resetTokenBtn').hide();
+                $('#tokenQrCode').addClass('hidden');
+                $('#tokenVerify').addClass('hidden');
+                $('#verifyTokenBtn').addClass('hidden');
+                $('#resetTokenBtn').addClass('hidden');
             }
         });
     });
@@ -352,8 +352,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.status === 'success') {
                     showSuccessToast(data.message);
                     // 隐藏验证部分，显示成功信息
-                    $('#tokenVerify').hide();
-                    $('#verifyTokenBtn').hide();
+                    $('#tokenVerify').addClass('hidden');
+                    $('#verifyTokenBtn').addClass('hidden');
                     $('#tokenInfo').html('<p class="text-success">' + data.message + '</p>');
                     // 更新重置按钮文本
                     $('#resetTokenBtn').html('<i class="fas fa-redo me-1"></i>重新生成令牌');
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // 显示密钥
         $('#tokenSecret').text(`密钥: ${secret}`);
         $('#qrCodeContainer').show();
-        $('#tokenQrCode').show();
+        $('#tokenQrCode').removeClass('hidden');
     }
 
     // 显示确认对话框函数

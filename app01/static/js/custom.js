@@ -710,8 +710,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // 填充服务器信息
-        document.getElementById('serverInfo').textContent = `${serverInfo.host}:${serverInfo.port}`;
-        document.getElementById('accountInfo').textContent = `${serverInfo.username}`;
+        const siEl = document.getElementById('serverInfo');
+        const aiEl = document.getElementById('accountInfo');
+        if (!siEl || !aiEl) { console.warn('showCountdown: DOM元素缺失'); return; }
+        siEl.textContent = `${serverInfo.host}:${serverInfo.port}`;
+        aiEl.textContent = `${serverInfo.username}`;
 
         // 填充申请者信息（如果有）
         // if (serverInfo.applicant) {
@@ -728,7 +731,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 显示倒计时区域
         const countdownSection = document.getElementById('countdownSection');
-        countdownSection.style.display = 'block';
+        if (!countdownSection) { console.warn('countdownSection 缺失'); return; }
+        countdownSection.classList.remove('hidden');
 
         // 添加入场动画
         countdownSection.classList.remove('fade-in');
@@ -762,8 +766,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // 填充服务器信息
-        document.getElementById('serverInfo').textContent = `${serverInfo.host}:${serverInfo.port}`;
-        document.getElementById('accountInfo').textContent = `${serverInfo.username}`;
+        const siEl = document.getElementById('serverInfo');
+        const aiEl = document.getElementById('accountInfo');
+        if (!siEl || !aiEl) { console.warn('showCountdown: DOM元素缺失'); return; }
+        siEl.textContent = `${serverInfo.host}:${serverInfo.port}`;
+        aiEl.textContent = `${serverInfo.username}`;
 
         // 填充申请者信息（如果有）
         if (serverInfo.applicant) {
@@ -885,7 +892,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 显示倒计时区域
         const countdownSection = document.getElementById('countdownSection');
-        countdownSection.style.display = 'block';
+        if (!countdownSection) { console.warn('countdownSection 缺失'); return; }
+        countdownSection.classList.remove('hidden');
 
         // 添加入场动画
         countdownSection.classList.remove('fade-in');
@@ -900,6 +908,21 @@ document.addEventListener('DOMContentLoaded', function () {
             countdownSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
     }
+    // 安全关闭 OTP 模态框
+    function closeTotpModal() {
+        var el = document.getElementById('totpModal');
+        if (!el) return;
+        var inst = bootstrap.Modal.getInstance(el);
+        if (inst) { inst.hide(); return; }
+        // fallback：Bootstrap 实例丢失时手动清理
+        el.classList.remove('show');
+        el.setAttribute('aria-hidden', 'true');
+        el.setAttribute('aria-modal', 'false');
+        document.body.classList.remove('modal-open');
+        var bd = document.querySelector('.modal-backdrop');
+        if (bd) bd.remove();
+    }
+
     // 开始倒计时
     function startCountdown() {
         // 清除之前的倒计时（如果有的话）
@@ -924,6 +947,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const hoursElement = document.getElementById('hours');
         const minutesElement = document.getElementById('minutes');
         const secondsElement = document.getElementById('seconds');
+
+        // 元素缺失时安全退出
+        if (!daysElement || !hoursElement || !minutesElement || !secondsElement) {
+            clearInterval(countdownInterval);
+            return;
+        }
 
         // 如果已经过期
         if (distance < 0) {
@@ -961,23 +990,24 @@ document.addEventListener('DOMContentLoaded', function () {
         minutesElement.classList.remove('countdown-critical');
         secondsElement.classList.remove('countdown-critical');
 
+        // 获取倒计时容器
+        const cdContainer = document.getElementById('countdownDisplay');
+
         // 如果剩余时间少于10分钟，添加紧急警告样式
         if (days === 0 && hours === 0 && minutes < 10) {
             daysElement.classList.add('countdown-critical');
             hoursElement.classList.add('countdown-critical');
             minutesElement.classList.add('countdown-critical');
             secondsElement.classList.add('countdown-critical');
-
-            // 添加脉冲动画
-            document.querySelector('.countdown-display-container').classList.add('countdown-warning');
+            if (cdContainer) cdContainer.classList.add('countdown-warning');
         }
         // 如果剩余时间少于1小时，添加警告样式
         else if (days === 0 && hours === 0 && minutes < 60) {
-            document.querySelector('.countdown-display-container').classList.add('countdown-warning');
+            if (cdContainer) cdContainer.classList.add('countdown-warning');
         }
         // 否则移除警告样式
         else {
-            document.querySelector('.countdown-display-container').classList.remove('countdown-warning');
+            if (cdContainer) cdContainer.classList.remove('countdown-warning');
         }
     }
 
@@ -1058,6 +1088,10 @@ document.addEventListener('DOMContentLoaded', function () {
                             } else {
                                 showCountdown(countdownInfo);
                             }
+                            // 如果之前是共享密码，恢复提示
+                            if (countdownInfo.is_shared) {
+                                updateSharedPasswordNotice('您正在使用共享密码');
+                            }
                         } else {
                             // 用户不匹配，清除保存的信息
                             console.log("用户不匹配，清除保存的信息");
@@ -1073,6 +1107,10 @@ document.addEventListener('DOMContentLoaded', function () {
                             showCountdownWithPassword(countdownInfo);
                         } else {
                             showCountdown(countdownInfo);
+                        }
+                        // 如果之前是共享密码，恢复提示
+                        if (countdownInfo.is_shared) {
+                            updateSharedPasswordNotice('您正在使用共享密码');
                         }
                     }
                 } else {
@@ -1103,7 +1141,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 expiration: serverInfo.expiration,
                 applicant: serverInfo.applicant || currentUser,
                 application_time: serverInfo.application_time || new Date().toLocaleString('zh-CN'),
-                password: serverInfo.password // 保存密码信息
+                password: serverInfo.password, // 保存密码信息
+                is_shared: serverInfo._is_shared || serverInfo.is_shared || false  // 共享密码标记
             };
             console.log("保存倒计时信息到localStorage:", countdownInfo);
             localStorage.setItem('serverCountdownInfo', JSON.stringify(countdownInfo));
@@ -1119,6 +1158,21 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (e) {
             console.error('清除保存的倒计时信息失败:', e);
         }
+    }
+
+    // 在倒计时区域显示/更新共享密码提示
+    function updateSharedPasswordNotice(message) {
+        var oldNotice = document.getElementById('sharedPasswordNotice');
+        if (oldNotice) oldNotice.remove();
+        var countdownSection = document.getElementById('countdownSection');
+        var countdownDisplay = document.getElementById('countdownDisplay');
+        if (!countdownDisplay) return;
+        var notice = document.createElement('div');
+        notice.id = 'sharedPasswordNotice';
+        notice.className = 'alert alert-warning py-2 mt-2 mb-0 text-center';
+        notice.innerHTML = '<i class="fas fa-users me-1"></i><small>' + message + '</small>';
+        countdownDisplay.parentNode.insertBefore(notice, countdownDisplay.nextSibling);
+        if (countdownSection) countdownSection.classList.remove('hidden');
     }
 
     // 表单提交事件
@@ -1206,6 +1260,11 @@ document.addEventListener('DOMContentLoaded', function () {
             if (result.status === 'notify_sent') {
                 // 显示TOTP模态框
                 applicationId = result.application_id;
+                // 无钉钉时更新提示文案
+                var hintEl = document.getElementById('otpModalHint');
+                if (hintEl && !result.dingtalk_configured) {
+                    hintEl.textContent = '请向管理员索取6位OTP验证码：';
+                }
                 const totpModal = new bootstrap.Modal(document.getElementById('totpModal'));
                 totpModal.show();
                 document.getElementById('totpCode').focus();
@@ -1263,11 +1322,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const result = await response.json();
             console.log("OTP验证响应结果:", result);
             if (result.status === 'success') {
-                const totpModal = bootstrap.Modal.getInstance(document.getElementById('totpModal'));
-                totpModal.hide();
-                document.getElementById('totpCode').value = '';
+                // 关闭模态框并清空输入
+                try { closeTotpModal(); } catch (e) { console.warn('关闭模态框出错:', e); }
+                var tc = document.getElementById('totpCode'); if (tc) tc.value = '';
 
                 const serverInfo = result.server_info;
+				// 如果是共享密码，在前端保留标记
+				serverInfo._is_shared = result.server_info.is_shared || false;
                 console.log("OTP验证成功，密码显示模式：", passwordDisplayMode);
 
                 // 根据配置决定密码显示方式
@@ -1281,6 +1342,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // 弹窗提示并复制密码
                     let message = `申请成功！\n服务器: ${serverInfo.host}\n用户名: ${serverInfo.username}\n有效期至: ${serverInfo.expiration}`;
+				    if (serverInfo.is_shared) {
+				        message += `
+
+⚠ ${result.message || '您正在使用他人已申请的共享密码'}`;
+				    }
                     if (result.operation_type === 'modify') {
                         message += `\n操作类型: 修改\n运维单号: ${result.maintenance_ticket}`;
                     } else {
@@ -1297,13 +1363,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     showCountdownWithPassword(serverInfo);
                     // 保存倒计时信息
                     saveCountdownInfo(serverInfo);
+
+                    // 如果是共享密码，在倒计时区域显示提示
+                    if (serverInfo.is_shared && result.message) {
+                        updateSharedPasswordNotice(result.message);
+                    }
                 }
             } else {
                 alert(result.message || '验证失败');
             }
         } catch (error) {
-            console.error('验证OTP时发生错误:', error);
-            alert('验证过程中发生错误，请稍后重试');
+            console.error('OTP验证出错:', error);
+            alert('出错: ' + (error.message || '未知'));
         } finally {
             // 恢复按钮状态
             verifyBtn.innerHTML = originalText;

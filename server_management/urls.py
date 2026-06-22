@@ -64,7 +64,9 @@ urlpatterns = [
     path('bulk_delete_users/', views.bulk_delete_users, name='bulk_delete_users'),
     path('api/batch-passwords/', views.get_batch_server_passwords, name='get_batch_server_passwords'),
 
-    
+    # 健康检查端点（供容器编排平台探测）
+    path('health/', views.health_check, name='health_check'),
+
     # 重定向到首页
     path('', RedirectView.as_view(url='index/')),
 ]

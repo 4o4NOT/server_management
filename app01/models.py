@@ -2,9 +2,19 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password, check_password
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class DecryptionError(Exception):
+    """密码解密失败异常"""
+    pass
 
 class UserInfoManager(BaseUserManager):
     """自定义用户管理器"""
@@ -90,15 +100,21 @@ class UserInfo(AbstractBaseUser, PermissionsMixin):
         """是否是员工（管理员）"""
         return self.is_superuser
 
-# 简化的密码加密类，使用Django SECRET_KEY
+# 简化的密码加密类，使用Django SECRET_KEY通过PBKDF2派生Fernet密钥
 class SimplePasswordCrypto:
     def __init__(self):
         from django.conf import settings
-        # 使用Django SECRET_KEY作为基础，生成适合Fernet的32字节密钥
         secret_key = settings.SECRET_KEY.encode('utf-8')
-        # 通过哈希确保长度为32字节
-        key = base64.urlsafe_b64encode(secret_key[:32].ljust(32, b'0'))
-        self.cipher = Fernet(key)
+        # 使用 PBKDF2-HMAC-SHA256 从 SECRET_KEY 派生 32 字节 Fernet 密钥
+        # salt 固定为项目标识（Fernet 密钥不同于密码哈希，使用固定 salt 是安全的）
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=b'server_management_fernet_salt',
+            iterations=100000,
+        )
+        derived_key = base64.urlsafe_b64encode(kdf.derive(secret_key))
+        self.cipher = Fernet(derived_key)
     
     def encrypt(self, password):
         """加密密码"""
@@ -116,9 +132,17 @@ class SimplePasswordCrypto:
             encrypted_password = encrypted_password.encode('utf-8')
         try:
             return self.cipher.decrypt(encrypted_password).decode('utf-8')
-        except Exception:
-            # 如果解密失败，可能是因为使用了旧的加密方式
-            return encrypted_password
+        except InvalidToken:
+            logger.error(
+                "密码解密失败：Fernet 密钥不匹配，"
+                "可能是 SECRET_KEY 变更导致，请检查配置"
+            )
+            raise DecryptionError(
+                "密码解密失败：密钥不匹配，请联系管理员检查系统配置"
+            )
+        except Exception as e:
+            logger.error("密码解密失败: %s", e)
+            raise DecryptionError(f"密码解密失败: {e}")
 
 # 创建全局加密实例
 password_crypto = SimplePasswordCrypto()

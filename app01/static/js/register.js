@@ -26,11 +26,11 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
 
         // 重置错误状态
-        errorAlert.style.display = 'none';
-        document.getElementById('usernameError').style.display = 'none';
-        document.getElementById('phoneError').style.display = 'none';
-        document.getElementById('passwordError').style.display = 'none';
-        document.getElementById('confirmPasswordError').style.display = 'none';
+        hideError();
+        document.getElementById('usernameError').classList.add('hidden');
+        document.getElementById('phoneError').classList.add('hidden');
+        document.getElementById('passwordError').classList.add('hidden');
+        document.getElementById('confirmPasswordError').classList.add('hidden');
 
         // 获取表单数据
         const username = document.getElementById('username').value.trim();
@@ -40,19 +40,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 验证用户名（2-4个汉字）
         if (!/^[\u4e00-\u9fa5]{2,4}$/.test(username)) {
-            document.getElementById('usernameError').style.display = 'block';
+            document.getElementById('usernameError').classList.remove('hidden');
             return;
         }
 
         // 验证手机号 (11位数字)
         if (!/^\d{11}$/.test(phone)) {
-            document.getElementById('phoneError').style.display = 'block';
+            document.getElementById('phoneError').classList.remove('hidden');
             return;
         }
 
         // 验证密码是否一致
         if (password !== confirmPassword) {
-            document.getElementById('confirmPasswordError').style.display = 'block';
+            document.getElementById('confirmPasswordError').classList.remove('hidden');
             return;
         }
 
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.status === 'success') {
                     // 注册成功，跳转到登录页
-                    window.location.href = "{% url 'login' %}?register_success=true";
+                    window.location.href = "/login/?register_success=true";
                 } else {
                     // 注册失败，显示错误信息
                     showError(data.message || '注册失败');
@@ -113,6 +113,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // 显示错误消息
     function showError(message) {
         errorMessage.textContent = message;
-        errorAlert.style.display = 'block';
+        errorAlert.classList.remove('hidden');
+    }
+
+    // 隐藏错误消息
+    function hideError() {
+        errorAlert.classList.add('hidden');
     }
 });

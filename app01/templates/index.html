@@ -1,407 +1,222 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>首页 - 权限申请系统</title>
-    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'css/fontawesome.min.css' %}" rel="stylesheet">
-    <link href="{% static 'css/custom.css' %}" rel="stylesheet"></link>
-    <link href="{% static 'css/all.min.css' %}" rel="stylesheet"></link>
-    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
-    <script src="{% static 'js/custom.js' %}"></script>
 
-</head>
-<body>
+{% block title %}首页 - 权限申请系统{% endblock %}
+
+{% block body %}
 <script>
-    window.SERVER_DATA = {{ servers|safe }};
-    // 定义全局URL变量，解决JavaScript中无法使用Django模板语法的问题
-    window.APP_URLS = {
-        verify_otp: "{% url 'verify_otp' %}",
-        apply_permission: "{% url 'apply_permission' %}",
-        check_server_password_expiration: "{% url 'check_server_password_expiration' %}"
-    };
-
-    // 定义密码显示配置
-    window.PASSWORD_CONFIG = {
-        display_mode: "{{ password_display_mode|default:'auto_copy' }}",
-    };
+window.SERVER_DATA = {{ servers|safe }};
+window.APP_URLS = {
+    verify_otp: "{% url 'verify_otp' %}",
+    apply_permission: "{% url 'apply_permission' %}",
+    check_server_password_expiration: "{% url 'check_server_password_expiration' %}"
+};
+window.PASSWORD_CONFIG = {
+    display_mode: "{{ password_display_mode|default:'auto_copy' }}",
+};
+window.DINGTALK_CONFIGURED = {{ dingtalk_configured }};
 </script>
-<div class="container py-5 flex-grow-1">
+
+<div class="page-wrapper">
+
     <!-- 页面头部 -->
-    <div class="header-gradient p-4 mb-8">
-        <div class="d-flex flex-column md:flex-row justify-content-between align-items-center">
-            <div class="text-center md:text-left mb-4 md:mb-0">
-                <h1 class="mb-3"><i class="fas fa-user-shield app-logo me-2"></i>权限申请系统</h1>
-                <p class="mb-0 app-tagline">安全、便捷的权限管理系统</p>
+    <div class="page-header">
+        <div class="page-header-top">
+            <div class="page-header-title">
+                <i class="fas fa-user-shield page-header-icon"></i>
+                <span>权限申请系统</span>
             </div>
-            <!-- 用户操作区域 -->
-            <div class="user-actions">
-                <div class="user-info">
-                    <div class="user-avatar">{{ user.user_name|first|upper }}</div>
-                    <div class="d-none d-md-block">
-                        <div class="fw-bold">{{ user.user_name }}</div>
-                        <small class="text-white-50">{{ user.phone }}</small>
-                    </div>
+            <div class="page-header-user">
+                <div class="avatar">{{ user.user_name|first|upper }}</div>
+                <div class="d-none d-md-flex user-identity">
+                    <span class="user-name">{{ user.user_name }}</span>
+                    <span class="user-role">
+                        <span class="role-badge {% if user.is_superuser %}role-admin{% else %}role-user{% endif %}">
+                            {% if user.is_superuser %}管理员{% else %}普通用户{% endif %}
+                        </span>
+                    </span>
                 </div>
-                <div class="btn-group gap-2">
-                    <a href="{% url 'change_password' %}" class="btn btn-sm">
-                        <i class="fas fa-key me-1"></i>修改密码
-                    </a>
-                    <a href="{% url 'logout' %}" class="btn btn-sm">
-                        <i class="fas fa-sign-out-alt me-1"></i>登出
-                    </a>
-                </div>
+                <a href="{% url 'change_password' %}" class="btn-ghost"><i class="fas fa-key me-1"></i>修改密码</a>
+                <a href="{% url 'logout' %}" class="btn-ghost"><i class="fas fa-sign-out-alt me-1"></i>登出</a>
             </div>
         </div>
-
-
-        <!-- 欢迎信息 -->
-        <div class="welcome-message text-center mb-6">
-            <!--<h2>欢迎回来，{{ user.user_name }}！</h2> -->
-            <p style="line-height: 50px;">您可以在这里申请服务器权限、管理账户信息或使用其他系统功能。</p>
-        </div>
-
-        <!-- 功能卡片 -->
-        <div class="row justify-content-center">
-            <!-- 管理员专属功能 -->
-            {% if user.is_superuser %}
-                <!-- 权限申请卡片 -->
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card feature-card fade-in">
-                        <div class="card-body text-center">
-                            <div class="feature-icon">
-                                <i class="fas fa-key"></i>
-                            </div>
-                            <h3 class="card-title">用户管理</h3>
-                            <p class="card-text">查看所有用户信息，修改用户密码。</p>
-                            <a href="{% url 'user_management' %}" class="btn btn-primary mt-2">立即查看</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 服务器管理卡片 -->
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card feature-card fade-in">
-                        <div class="card-body text-center">
-                            <div class="feature-icon">
-                                <i class="fas fa-server"></i>
-                            </div>
-                            <h3 class="card-title">服务器管理</h3>
-                            <p class="card-text">查看和管理您有权限访问的服务器信息。</p>
-                            <a href="{% url 'server_management' %}" class="btn btn-primary mt-2">查看服务器</a>
-                        </div>
-                    </div>
-                </div>
-            {% else %}
-                <!-- 可申请服务器列表卡片 -->
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card feature-card fade-in">
-                        <div class="card-body text-center">
-                            <div class="feature-icon">
-                                <i class="fas fa-list"></i>
-                            </div>
-                            <h3 class="card-title">可申请服务器</h3>
-                            <p class="card-text">查看所有可申请的服务器列表和账户信息。</p>
-                            <a href="{% url 'server_list' %}" class="btn btn-primary mt-2">查看列表</a>
-                        </div>
-                    </div>
-                </div>
-                <!-- 权限申请卡片
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card feature-card fade-in">
-                        <div class="card-body text-center">
-                            <div class="feature-icon">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <h3 class="card-title">权限申请</h3>
-                            <p class="card-text">申请临时服务器访问权限。</p>
-                            <a href="#applySection" class="btn btn-primary mt-2">立即申请</a>
-                        </div>
-                    </div>
-                </div> -->
-                <!-- 批量权限申请卡片 -->
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card feature-card fade-in">
-                        <div class="card-body text-center">
-                            <div class="feature-icon">
-                                <i class="fas fa-copy"></i>
-                            </div>
-                            <h3 class="card-title">批量申请</h3>
-                            <p class="card-text">批量申请多个服务器访问权限。</p>
-                            <a href="{% url 'bulk_apply' %}" class="btn btn-primary mt-2">批量申请</a>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-
-
-
-        <!-- 申请表单 -->
-        <div id="applySection" class="card fade-in mx-auto col-lg-8 px-2">
-            <div class="card-header text-center">
-                <h3 class="mb-0"><i class="fas fa-file-alt me-2"></i>权限申请</h3>
-            </div>
-            <div class="card-body">
-                <form id="applyForm">
-                    <div class="mb-3 row">
-                        <label class="col-sm-3 col-form-label text-sm-end"><i class="fas fa-user me-1"></i>申请人</label>
-                        <div class="col-sm-9">
-                            <input type="text" class="form-control" id="applicant" value="{{ user.user_name }}" disabled>
-                        </div>
-                    </div>
-                    <div class="mb-3 row position-relative">
-                        <label class="col-sm-3 col-form-label text-sm-end"><i class="fas fa-desktop me-1"></i>目标主机</label>
-                        <div class="col-sm-9">
-                            <div class="position-relative">
-                                <input type="text" class="form-control" id="targetHost" autocomplete="off" placeholder="输入主机地址" required>
-                                <div id="hostSuggestions" class="position-absolute bg-white border rounded shadow-sm hidden" style="z-index: 99; width: 100%;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-sm-3 col-form-label text-sm-end"><i class="fas fa-user-circle me-1"></i>申请账号</label>
-                        <div class="col-sm-9">
-                            <select class="form-select" id="accountName" required>
-                                <option value="">请选择账号</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-4 row">
-                        <label class="col-sm-3 col-form-label text-sm-end"><i class="fas fa-clock me-1"></i>申请时长</label>
-                        <div class="col-sm-9">
-                            <select class="form-select" id="duration">
-                                {% for hours, display_name in duration_options %}
-                                    <option value="{{ hours }}"{% if hours == 0.5 %} selected{% endif %}>{{ display_name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="mb-3 row">
-                        <label class="col-sm-3 col-form-label text-sm-end"><i class="fas fa-cog me-1"></i>操作类型</label>
-                        <div class="col-sm-9">
-                            <select class="form-select" id="operationType" required>
-                                <option value="view">查看</option>
-                                <option value="modify">修改</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- 添加运维单号输入框（默认隐藏） -->
-                    <div class="mb-3 row" id="maintenanceTicketRow" style="display: none;">
-                        <label class="col-sm-3 col-form-label text-sm-end"><i class="fas fa-ticket-alt me-1"></i>运维单号</label>
-                        <div class="col-sm-9">
-                            <input type="text" class="form-control" id="maintenanceTicket" placeholder="请输入一站式运维单号">
-
-                        </div>
-                    </div>
-
-                    <!-- 在申请原因行之前添加说明 -->
-                    <div class="mb-3 row" id="operationTypeInfo" style="display: none;">
-                        <div class="col-sm-9 offset-sm-3">
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-1"></i>
-                                选择"修改"类型需要提供一站式运维单号
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-4 row">
-                        <label class="col-sm-3 col-form-label text-sm-end"><i class="fas fa-comment me-1"></i>申请原因</label>
-                        <div class="col-sm-9">
-                            <textarea class="form-control" id="reason" rows="3" placeholder="请说明申请权限的原因" required></textarea>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 text-center">
-                            <button type="submit" class="btn btn-primary" id="submitBtn">
-                                <span id="submitText">提交申请</span>
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-
-        <!-- TOTP验证码模态框 -->
-        <div class="modal fade" id="totpModal" tabindex="-1" aria-labelledby="totpModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="totpModalLabel">管理员令牌验证</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>请输入管理员令牌验证码：</p>
-                        <div class="mb-3">
-                            <input type="text" class="form-control" id="totpCode" placeholder="6位数字验证码" required maxlength="6">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                        <button type="button" class="btn btn-primary" id="verifyTotpBtn">验证</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 密码显示模态框 -->
-        <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="passwordModalLabel">服务器密码信息</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">服务器信息</label>
-                            <div class="form-control-plaintext" id="modalServerInfo"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">用户名</label>
-                            <div class="form-control-plaintext" id="modalUsername"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">密码</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="modalPassword" readonly>
-                                <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn">
-                                    <i class="fas fa-eye me-1"></i>显示密码
-                                </button>
-                                <button class="btn btn-outline-primary" type="button" id="copyPasswordBtn">
-                                    <i class="fas fa-copy me-1"></i>复制
-                                </button>
-                            </div>
-                        </div>
-                        <div class="alert alert-info" id="passwordVisibilityWarning">
-                            <i class="fas fa-info-circle me-1"></i>
-                            密码将在 <span id="countdownTimer" class="fw-bold">3</span> 秒后自动隐藏
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 在申请表单后面添加倒计时显示区域 -->
-        <div id="countdownSection" class="countdown-card fade-in mx-auto mt-4 col-lg-8" style="display: none;">
-            <div class="card-header" style="background: linear-gradient(135deg, #e74c3c, #c0392b) !important; border: none !important;">
-                <h3 class="mb-0 text-white"><i class="fas fa-clock me-2"></i>密码有效期提醒</h3>
-            </div>
-            <div class="card-body">
-                <div class="server-info-box">
-                    <div class="row">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <div class="server-info-label"><i class="fas fa-server me-2"></i>服务器信息</div>
-                            <div id="serverInfo" class="server-info-value"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="server-info-label"><i class="fas fa-user me-2"></i>账户信息</div>
-                            <div id="accountInfo" class="server-info-value"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 添加申请者信息 -->
-                <div class="server-info-box mt-3">
-                    <div class="row">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <div class="server-info-label"><i class="fas fa-user-circle me-2"></i>申请者</div>
-                            <div id="applicantInfo" class="server-info-value"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="server-info-label"><i class="fas fa-clock me-2"></i>申请时间</div>
-                            <div id="applicationTimeInfo" class="server-info-value"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <h5 class="text-center mb-4 text-muted">密码将于以下时间后过期:</h5>
-
-                <div class="countdown-display-container">
-                    <div id="countdownDisplay" class="countdown-display">
-                        <div class="countdown-unit">
-                            <span id="days" class="countdown-number">00</span>
-                            <span class="countdown-label">天</span>
-                        </div>
-                        <div class="countdown-unit">
-                            <span id="hours" class="countdown-number">00</span>
-                            <span class="countdown-label">小时</span>
-                        </div>
-                        <div class="countdown-unit">
-                            <span id="minutes" class="countdown-number">00</span>
-                            <span class="countdown-label">分钟</span>
-                        </div>
-                        <div class="countdown-unit">
-                            <span id="seconds" class="countdown-number">00</span>
-                            <span class="countdown-label">秒</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert alert-countdown">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>重要提醒:</strong> 请在密码过期前保存您的工作。密码过期后将自动重置，需要重新申请权限。
-                </div>
-            </div>
-        </div>
-
-        <!-- 密码信息显示区域 -->
-        <div id="passwordInfoSection" class="countdown-card fade-in mx-auto mt-4 col-lg-8" style="display: none;">
-            <div class="card-header" style="background: linear-gradient(135deg, #3498db, #2980b9) !important; border: none !important;">
-                <h3 class="mb-0 text-white"><i class="fas fa-key me-2"></i>服务器密码信息</h3>
-            </div>
-            <div class="card-body">
-                <div class="server-info-box">
-                    <div class="row">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <div class="server-info-label"><i class="fas fa-server me-2"></i>服务器信息</div>
-                            <div id="passwordServerInfo" class="server-info-value"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="server-info-label"><i class="fas fa-user me-2"></i>账户信息</div>
-                            <div id="passwordAccountInfo" class="server-info-value"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="server-info-box mt-3">
-                    <div class="row">
-                        <div class="col-md-8 mb-3 mb-md-0">
-                            <div class="server-info-label"><i class="fas fa-lock me-2"></i>密码</div>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="passwordValue" value="••••••••" readonly>
-                                <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn">
-                                    <i class="fas fa-eye me-1"></i>显示
-                                </button>
-                                <button class="btn btn-outline-primary" type="button" id="copyPasswordFromSectionBtn">
-                                    <i class="fas fa-copy me-1"></i>复制
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="server-info-label"><i class="fas fa-clock me-2"></i>自动隐藏倒计时</div>
-                            <div class="server-info-value">
-                                <span id="passwordCountdownTimer" class="fw-bold">3</span> 秒
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert alert-info" id="passwordVisibilityWarning">
-                    <i class="fas fa-info-circle me-1"></i>
-                    密码将在 <span id="passwordTimer" class="fw-bold">3</span> 秒后自动隐藏
-                </div>
-            </div>
-        </div>
-        <div id="serverData" data-servers="{{ servers|escapejs }}"></div>
-        {% include 'footer.html' %}
     </div>
-</body>
-</html>
+
+    <!-- 功能卡片 -->
+    <div class="feature-cards">
+        {% if user.is_superuser %}
+        <a href="{% url 'user_management' %}" class="feature-card fade-in">
+            <div class="feature-card-icon"><i class="fas fa-users"></i></div>
+            <h3>用户管理</h3>
+            <p>查看所有用户信息，修改用户密码。</p>
+            <span class="btn btn-primary btn-sm">立即查看</span>
+        </a>
+        <a href="{% url 'server_management' %}" class="feature-card fade-in">
+            <div class="feature-card-icon"><i class="fas fa-server"></i></div>
+            <h3>服务器管理</h3>
+            <p>查看和管理服务器信息。</p>
+            <span class="btn btn-primary btn-sm">查看服务器</span>
+        </a>
+        {% else %}
+        <a href="{% url 'server_list' %}" class="feature-card fade-in">
+            <div class="feature-card-icon"><i class="fas fa-list"></i></div>
+            <h3>可申请服务器</h3>
+            <p>查看所有可申请的服务器列表和账户信息。</p>
+            <span class="btn btn-primary btn-sm">查看列表</span>
+        </a>
+        <a href="{% url 'bulk_apply' %}" class="feature-card fade-in">
+            <div class="feature-card-icon"><i class="fas fa-copy"></i></div>
+            <h3>批量申请</h3>
+            <p>批量申请多个服务器访问权限。</p>
+            <span class="btn btn-primary btn-sm">批量申请</span>
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- 申请表单 -->
+    <div id="applySection" class="card fade-in mx-auto" style="max-width:720px;">
+        <div class="card-header text-center">
+            <i class="fas fa-file-alt me-2"></i>权限申请
+        </div>
+        <div class="card-body">
+            <form id="applyForm">
+
+                <div class="form-row">
+                    <label>申请人</label>
+                    <div><input type="text" class="form-control" value="{{ user.user_name }}" disabled></div>
+                </div>
+
+                <div class="form-row">
+                    <label>目标主机</label>
+                    <div class="relative">
+                        <input type="text" class="form-control" id="targetHost" autocomplete="off" placeholder="输入主机地址" required>
+                        <div id="hostSuggestions" class="suggestions-dropdown hidden"></div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label>申请账号</label>
+                    <div>
+                        <select class="form-select" id="accountName" required>
+                            <option value="">请选择账号</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label>申请时长</label>
+                    <div>
+                        <select class="form-select" id="duration">
+                            {% for hours, display_name in duration_options %}
+                                <option value="{{ hours }}"{% if hours == 0.5 %} selected{% endif %}>{{ display_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label>操作类型</label>
+                    <div>
+                        <select class="form-select" id="operationType" required>
+                            <option value="view">查看</option>
+                            <option value="modify">修改</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row hidden" id="maintenanceTicketRow">
+                    <label>运维单号</label>
+                    <div><input type="text" class="form-control" id="maintenanceTicket" placeholder="请输入一站式运维单号"></div>
+                </div>
+
+                <div class="form-row">
+                    <label>申请原因</label>
+                    <div><textarea class="form-control" id="reason" rows="3" placeholder="请说明申请权限的原因" required></textarea></div>
+                </div>
+
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span id="submitText">提交申请</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOTP 验证模态框 -->
+    <div class="modal fade" id="totpModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">管理员令牌验证</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="otpModalHint">请输入管理员令牌验证码：</p>
+                    <input type="text" class="form-control" id="totpCode" placeholder="6位数字验证码" maxlength="6">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="verifyTotpBtn">验证</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 倒计时区域 -->
+    <div id="countdownSection" class="countdown-section mx-auto mt-4 hidden" style="max-width:720px;">
+        <div class="countdown-header">
+            <i class="fas fa-clock me-2"></i>密码有效期提醒
+        </div>
+        <div class="countdown-body">
+            <div class="info-row">
+                <div class="info-item">
+                    <div class="info-item-label">服务器信息</div>
+                    <div class="info-item-value" id="serverInfo"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-label">账户信息</div>
+                    <div class="info-item-value" id="accountInfo"></div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-item">
+                    <div class="info-item-label">申请者</div>
+                    <div class="info-item-value" id="applicantInfo"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-label">申请时间</div>
+                    <div class="info-item-value" id="applicationTimeInfo"></div>
+                </div>
+            </div>
+
+            <div class="countdown-grid" id="countdownDisplay">
+                <div class="countdown-box">
+                    <div class="countdown-num" id="days">00</div>
+                    <div class="countdown-label">天</div>
+                </div>
+                <div class="countdown-box">
+                    <div class="countdown-num" id="hours">00</div>
+                    <div class="countdown-label">小时</div>
+                </div>
+                <div class="countdown-box">
+                    <div class="countdown-num" id="minutes">00</div>
+                    <div class="countdown-label">分钟</div>
+                </div>
+                <div class="countdown-box">
+                    <div class="countdown-num" id="seconds">00</div>
+                    <div class="countdown-label">秒</div>
+                </div>
+            </div>
+
+            <div class="alert alert-warning mt-3">
+                <i class="fas fa-info-circle me-1"></i>
+                <strong>重要提醒:</strong> 密码过期后将自动重置，需要重新申请权限。
+            </div>
+        </div>
+    </div>
+
+    <div id="serverData" data-servers="{{ servers|escapejs }}"></div>
+    {% include 'footer.html' %}
+</div>
+{% endblock %}
